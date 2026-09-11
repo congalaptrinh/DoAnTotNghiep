@@ -16,6 +16,8 @@ const supplierRoutes = require('./routes/supplier.routes');
 const inventoryRoutes = require('./routes/inventory.routes');
 const importOrderRoutes = require('./routes/importOrder.routes');
 const exportOrderRoutes = require('./routes/exportOrder.routes');
+const transferOrderRoutes = require('./routes/transferOrder.routes');
+const recoveryOrderRoutes = require('./routes/recoveryOrder.routes');
 
 const app = express();
 
@@ -38,6 +40,8 @@ app.use('/api/suppliers', supplierRoutes);
 app.use('/api/inventory', inventoryRoutes);
 app.use('/api/import-orders', importOrderRoutes);
 app.use('/api/export-orders', exportOrderRoutes);
+app.use('/api/transfer-orders', transferOrderRoutes);
+app.use('/api/recovery-orders', recoveryOrderRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);
