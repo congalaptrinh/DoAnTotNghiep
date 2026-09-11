@@ -13,6 +13,7 @@ const itemRoutes = require('./routes/item.routes');
 const warehouseRoutes = require('./routes/warehouse.routes');
 const storageLocationRoutes = require('./routes/storageLocation.routes');
 const supplierRoutes = require('./routes/supplier.routes');
+const inventoryRoutes = require('./routes/inventory.routes');
 
 const app = express();
 
@@ -32,6 +33,7 @@ app.use('/api/items', itemRoutes);
 app.use('/api/warehouses', warehouseRoutes);
 app.use('/api/storage-locations', storageLocationRoutes);
 app.use('/api/suppliers', supplierRoutes);
+app.use('/api/inventory', inventoryRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

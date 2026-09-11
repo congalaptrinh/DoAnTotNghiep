@@ -35,8 +35,8 @@
 
 ## Giai đoạn D — Tồn kho (đọc)
 
-- [x] D1. `GET /api/inventory` (filter item/warehouse/location). Note: đọc cho cả 4 role.
-- [x] D2. `GET /api/inventory/:itemId`. Note: trả toàn bộ dòng tồn kho của 1 vật tư theo từng vị trí (không phân trang, filter thêm được `warehouse_id`).
+- [x] D1. `GET /api/inventory` (filter item/warehouse/location). Note (viết lại 2026-09-11): `src/services/inventory.service.js`, `src/controllers/inventory.controller.js`, `src/routes/inventory.routes.js` — đọc cho cả 4 role (`authorize(...ALL_ROLES)`), không có route ghi (inventory chỉ được thay đổi gián tiếp qua các nghiệp vụ kho ở Giai đoạn E). Filter query `item_id`/`warehouse_id`/`location_id` (kết hợp AND nếu truyền nhiều). Mỗi dòng include sẵn `item` (item_code/item_name/unit/min_stock/max_stock), `warehouse` (warehouse_name), `location` (location_code/location_name) — tránh FE phải gọi thêm API riêng để hiển thị tên. Chưa có nghiệp vụ nhập kho (Giai đoạn E) nên chưa có dữ liệu `inventory` thật — test bằng fixture tạo tạm qua Prisma (2 vật tư, 2 kho, 3 vị trí, 4 dòng tồn kho) rồi xoá sạch ngay sau khi verify xong (xem `07-DECISIONS-LOG.md`). Test thực tế: không filter → trả đủ 4 dòng; filter theo `item_id` → đúng 3 dòng; theo `warehouse_id` → đúng 3 dòng; theo `location_id` → đúng 2 dòng, đúng số liệu `quantity`/`available_quantity`; không có token → 401.
+- [x] D2. `GET /api/inventory/:itemId`. Note (viết lại 2026-09-11): trả toàn bộ dòng tồn kho của 1 vật tư theo từng vị trí (không phân trang), filter thêm được `warehouse_id` qua query. Test thực tế: gọi với `item1` (nằm ở 3 vị trí thuộc 2 kho khác nhau) → trả đúng 3 dòng kèm đúng tên kho/vị trí; thêm `?warehouse_id=` → lọc còn đúng 2 dòng thuộc kho đó. Dữ liệu fixture đã dọn sạch — DB xác nhận về lại baseline (0 dòng `inventory`/`items`/`warehouses`) sau khi test.
 
 ## Giai đoạn E — Nghiệp vụ kho (mỗi bước: tạo phiếu → xác nhận có transaction → ghi stock_movements)
 
