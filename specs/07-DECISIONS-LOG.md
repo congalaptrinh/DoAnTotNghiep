@@ -53,3 +53,14 @@
   - Đăng nhập với user có `status != ACTIVE` → 403 "Tài khoản đã bị khóa" (không phải 401) — phân biệt rõ với sai email/mật khẩu (401).
   - Response của `login`/`me` không bao giờ chứa `password_hash` (destructure loại bỏ trong `auth.service.js`).
 - Ảnh hưởng tới: Backend (mọi route nghiệp vụ sau này dùng đúng pattern `ApiError` + `success/fail` + mapping lỗi này), Web/Mobile (biết chính xác status code/message để hiển thị lỗi, biết cấu trúc JWT không dùng được trực tiếp để lấy role_id).
+
+## 2026-09-11 — CRUD danh mục (C1-C4): hằng số role, search filter, cập nhật mật khẩu
+- Bối cảnh: viết CRUD cho 7 resource (`users`, `roles`, `item-categories`, `items`, `warehouses`, `storage-locations`, `suppliers`), cần vài quy ước chung để không lặp lại quyết định ở từng resource.
+- Quyết định:
+  - Gom 4 bộ role dùng chung vào `src/utils/roles.js`: `ADMIN_ONLY=['admin']`, `MANAGE_ROLES=['admin','warehouse_manager']`, `STAFF_WRITE_ROLES=['admin','warehouse_manager','warehouse_staff']`, `ALL_ROLES=` cả 4 role. Mọi route file gọi `authorize(...ROLES_CONST)` thay vì liệt kê string tay — tránh gõ sai tên role giữa các file.
+  - Route `users`/`roles`: áp `authenticate + authorize(ADMIN_ONLY)` ở cấp `router.use(...)` cho TOÀN BỘ method kể cả GET (khác với các resource khác chỉ giới hạn quyền ghi).
+  - Filter dạng "search" (trên `items.item_code`/`item_name`, `suppliers.supplier_name`) dùng Prisma `contains` + `mode: 'insensitive'` — tìm kiếm không phân biệt hoa/thường, khớp một phần chuỗi.
+  - `PUT /api/users/:id`: field `password` là optional; nếu không gửi thì giữ nguyên `password_hash` cũ (không ép đổi mật khẩu mỗi lần sửa thông tin khác).
+  - `DELETE /api/roles/:id` và `DELETE /api/item-categories/:id` là xoá thật (`prisma.x.delete`), KHÔNG tự viết code kiểm tra "còn bị tham chiếu không" — cố ý dựa vào FK constraint có sẵn trong DB (roles←users là RESTRICT mặc định vì `role_id` bắt buộc; item_categories←items cũng RESTRICT vì `category_id` bắt buộc) + `errorHandler` đã map `P2003`→409 từ B2. Đã verify thực tế cả 2 trường hợp trả đúng 409.
+  - Danh sách (list) mỗi resource sắp xếp mặc định theo tên/mã tăng dần (`role_name`, `category_name`, `location_code`, `warehouse_name`, `supplier_name` ASC) hoặc `created_at` giảm dần (`users`, `items`) — chưa có yêu cầu sort tuỳ chỉnh từ FE nên chọn thứ tự dễ đọc nhất theo ngữ cảnh từng resource.
+- Ảnh hưởng tới: Backend (Giai đoạn D-G tái dùng `src/utils/roles.js` thay vì định nghĩa lại), Web/Mobile (biết `search` là tìm gần đúng không phân biệt hoa thường; biết PUT user không bắt buộc gửi password).
