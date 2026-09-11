@@ -15,16 +15,10 @@
 
 ---
 
-## Ví dụ (xoá dòng này khi bắt đầu ghi thật)
-
-## 2026-07-12 — Cấu trúc thư mục Backend
-- Bối cảnh: spec không quy định cụ thể cấu trúc folder.
-- Quyết định: `src/routes`, `src/controllers`, `src/services`, `src/middlewares`, `src/prisma` (schema + client).
-- Ảnh hưởng tới: Backend (các phiên code sau cần theo đúng cấu trúc này).
-
----
-
-*(Bắt đầu ghi các quyết định thật từ đây)*
+## 2026-09-11 — Cấu trúc thư mục Backend
+- Bối cảnh: spec không quy định cụ thể cấu trúc folder (B1).
+- Quyết định: `src/{routes,controllers,services,middlewares,utils,validators}` chứa toàn bộ code backend; `prisma/` (schema.prisma, migrations/, seed.js) đặt ở **root** của `backend/`, KHÔNG lồng trong `src/` — vì đây là convention chuẩn của Prisma CLI (`prisma migrate`, `prisma studio`... đều tìm `prisma/schema.prisma` ở root theo mặc định, không cần cấu hình thêm). Prisma client singleton đặt tại `src/utils/prisma.js`. `tests/` và `postman/` cũng ở root `backend/`.
+- Ảnh hưởng tới: Backend (mọi file code sau này phải theo đúng cấu trúc này, không tạo `src/prisma` hay đặt schema nơi khác).
 
 ## 2026-09-11 — npm install-scripts approve cho native/postinstall packages
 - Bối cảnh: viết lại backend từ đầu (code cũ mất do cài lại Windows). npm bản mới trên máy (11.19.0) mặc định CHẶN install script (preinstall/install/postinstall) của package lạ trừ khi được approve tường minh — `bcrypt`, `prisma`, `@prisma/client`, `@prisma/engines`, `@parcel/watcher`, `unrs-resolver` đều cần chạy script này để build native binding / tải engine binary.
@@ -48,3 +42,14 @@
   - `storage_locations`: thêm unique composite `(warehouse_id, location_code)` — spec chỉ gợi ý đánh index `location_code`, nhưng để tránh trùng mã vị trí trong cùng 1 kho, ràng buộc unique theo cặp.
   - Enum `ReferenceType` dùng giá trị UPPER_SNAKE_CASE (`IMPORT_ORDER`, `EXPORT_ORDER`...) thay vì snake_case thường như liệt kê trong spec (`import_order`...) — theo convention enum Prisma/Postgres viết hoa.
 - Ảnh hưởng tới: Backend (mọi service/controller dùng đúng các ràng buộc này), Web/Mobile (form tạo item bắt buộc chọn category; form tạo warehouse có thể bỏ trống quản lý).
+
+## 2026-09-11 — Response helper, error mapping, JWT payload (B2-B4)
+- Bối cảnh: viết middleware nền tảng (error handler, auth), cần chốt vài chi tiết implementation mà `02-BACKEND-SPEC.md` chỉ nói ở mức nguyên tắc chung.
+- Quyết định:
+  - Helper response dùng chung: `success(res, data, message, statusCode=200)` và `fail(res, message, statusCode=400, data=null)` trong `src/utils/response.js` — mọi controller PHẢI dùng 2 hàm này, không tự `res.json(...)` tay để tránh lệch format `{success,data,message}`.
+  - Lỗi nghiệp vụ chủ động dùng `throw new ApiError(statusCode, message)` (từ `src/utils/ApiError.js`), không `return fail(...)` trực tiếp trong service — để error luôn đi qua 1 chỗ xử lý duy nhất (`errorHandler`).
+  - Mapping lỗi Prisma → HTTP: `P2002` (unique constraint) → 409 "Dữ liệu đã tồn tại"; `P2003` (foreign key constraint) → 409 "Dữ liệu tham chiếu không hợp lệ hoặc đang được sử dụng"; `P2025` (record not found, ví dụ update/delete id không tồn tại) → 404. Lỗi `ZodError` → 400 kèm message ghép từ tất cả field lỗi. Lỗi khác → 500, log ra console, KHÔNG lộ message/stack thật ra response (tránh rò rỉ thông tin hệ thống).
+  - JWT payload: `{ user_id, role }` (role = `role_name` dạng chuỗi, ví dụ `"admin"`, không phải `role_id`) — `authorize(...roles)` so sánh trực tiếp `req.user.role` với danh sách chuỗi role truyền vào. Secret đọc từ `process.env.JWT_SECRET`, hạn dùng từ `process.env.JWT_EXPIRES_IN` (mặc định `1d` nếu thiếu).
+  - Đăng nhập với user có `status != ACTIVE` → 403 "Tài khoản đã bị khóa" (không phải 401) — phân biệt rõ với sai email/mật khẩu (401).
+  - Response của `login`/`me` không bao giờ chứa `password_hash` (destructure loại bỏ trong `auth.service.js`).
+- Ảnh hưởng tới: Backend (mọi route nghiệp vụ sau này dùng đúng pattern `ApiError` + `success/fail` + mapping lỗi này), Web/Mobile (biết chính xác status code/message để hiển thị lỗi, biết cấu trúc JWT không dùng được trực tiếp để lấy role_id).
