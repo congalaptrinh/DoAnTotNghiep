@@ -1,0 +1,491 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums dùng chung ────────────────────────────────────────────────
+
+enum EntityStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum OrderStatus {
+  DRAFT
+  CONFIRMED
+  CANCELLED
+}
+
+enum MovementType {
+  IMPORT
+  EXPORT
+  TRANSFER_IN
+  TRANSFER_OUT
+  RECOVERY
+  ADJUSTMENT_STOCKTAKE
+  LIQUIDATION
+}
+
+enum ReferenceType {
+  IMPORT_ORDER
+  EXPORT_ORDER
+  TRANSFER_ORDER
+  RECOVERY_ORDER
+  STOCKTAKE_SESSION
+  LIQUIDATION_ORDER
+}
+
+// ─── 1. Người dùng & phân quyền ──────────────────────────────────────
+
+model Role {
+  role_id     String  @id @default(uuid())
+  role_name   String  @unique
+  description String?
+
+  users User[]
+
+  @@map("roles")
+}
+
+model User {
+  user_id       String       @id @default(uuid())
+  full_name     String
+  email         String       @unique
+  password_hash String
+  phone         String?
+  role_id       String
+  role          Role         @relation(fields: [role_id], references: [role_id])
+  status        EntityStatus @default(ACTIVE)
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+
+  managed_warehouses          Warehouse[]
+  import_orders               ImportOrder[]
+  export_orders_requested     ExportOrder[]      @relation("ExportRequestedBy")
+  export_orders_approved      ExportOrder[]      @relation("ExportApprovedBy")
+  transfer_orders             TransferOrder[]
+  recovery_orders             RecoveryOrder[]
+  stocktake_sessions          StocktakeSession[]
+  liquidation_orders_created  LiquidationOrder[] @relation("LiquidationCreatedBy")
+  liquidation_orders_approved LiquidationOrder[] @relation("LiquidationApprovedBy")
+  stock_movements             StockMovement[]
+
+  @@index([role_id])
+  @@map("users")
+}
+
+// ─── 2. Danh mục vật tư ──────────────────────────────────────────────
+
+model ItemCategory {
+  category_id   String        @id @default(uuid())
+  category_name String
+  parent_id     String?
+  parent        ItemCategory? @relation("CategoryParent", fields: [parent_id], references: [category_id])
+  description   String?
+
+  children ItemCategory[] @relation("CategoryParent")
+  items    Item[]
+
+  @@index([parent_id])
+  @@map("item_categories")
+}
+
+model Item {
+  item_id        String       @id @default(uuid())
+  item_code      String       @unique
+  item_name      String
+  item_type      String?
+  category_id    String
+  category       ItemCategory @relation(fields: [category_id], references: [category_id])
+  unit           String
+  description    String?
+  specifications String?
+  min_stock      Int          @default(0)
+  max_stock      Int?
+  image_url      String?
+  status         EntityStatus @default(ACTIVE)
+  created_at     DateTime     @default(now())
+  updated_at     DateTime     @updatedAt
+
+  inventory               Inventory[]
+  import_order_items      ImportOrderItem[]
+  export_order_items      ExportOrderItem[]
+  transfer_order_items    TransferOrderItem[]
+  recovery_order_items    RecoveryOrderItem[]
+  stocktake_session_items StocktakeSessionItem[]
+  liquidation_order_items LiquidationOrderItem[]
+  stock_movements         StockMovement[]
+
+  @@index([category_id])
+  @@map("items")
+}
+
+// ─── 3. Kho & vị trí lưu trữ ─────────────────────────────────────────
+
+model Warehouse {
+  warehouse_id   String       @id @default(uuid())
+  warehouse_name String
+  address        String?
+  manager_id     String?
+  manager        User?        @relation(fields: [manager_id], references: [user_id])
+  description    String?
+  status         EntityStatus @default(ACTIVE)
+  created_at     DateTime     @default(now())
+  updated_at     DateTime     @updatedAt
+
+  storage_locations    StorageLocation[]
+  inventory            Inventory[]
+  import_orders        ImportOrder[]
+  export_orders        ExportOrder[]
+  transfer_orders_from TransferOrder[]    @relation("TransferFromWarehouse")
+  transfer_orders_to   TransferOrder[]    @relation("TransferToWarehouse")
+  recovery_orders      RecoveryOrder[]
+  stocktake_sessions   StocktakeSession[]
+  liquidation_orders   LiquidationOrder[]
+  stock_movements      StockMovement[]
+
+  @@index([manager_id])
+  @@map("warehouses")
+}
+
+model StorageLocation {
+  location_id   String       @id @default(uuid())
+  warehouse_id  String
+  warehouse     Warehouse    @relation(fields: [warehouse_id], references: [warehouse_id])
+  location_code String
+  location_name String?
+  area          String?
+  shelf         String?
+  drawer        String?
+  box           String?
+  description   String?
+  status        EntityStatus @default(ACTIVE)
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+
+  inventory               Inventory[]
+  import_order_items      ImportOrderItem[]
+  export_order_items      ExportOrderItem[]
+  transfer_items_from     TransferOrderItem[]    @relation("TransferFromLocation")
+  transfer_items_to       TransferOrderItem[]    @relation("TransferToLocation")
+  recovery_order_items    RecoveryOrderItem[]
+  stocktake_session_items StocktakeSessionItem[]
+  liquidation_order_items LiquidationOrderItem[]
+  stock_movements         StockMovement[]
+
+  @@unique([warehouse_id, location_code])
+  @@index([warehouse_id])
+  @@map("storage_locations")
+}
+
+// ─── 4. Tồn kho ──────────────────────────────────────────────────────
+
+model Inventory {
+  inventory_id       String          @id @default(uuid())
+  item_id            String
+  item               Item            @relation(fields: [item_id], references: [item_id])
+  warehouse_id       String
+  warehouse          Warehouse       @relation(fields: [warehouse_id], references: [warehouse_id])
+  location_id        String
+  location           StorageLocation @relation(fields: [location_id], references: [location_id])
+  quantity           Int             @default(0)
+  reserved_quantity  Int             @default(0)
+  available_quantity Int             @default(0)
+  updated_at         DateTime        @updatedAt
+
+  @@unique([item_id, warehouse_id, location_id])
+  @@index([warehouse_id])
+  @@index([location_id])
+  @@map("inventory")
+}
+
+// ─── 5. Nhà cung cấp ─────────────────────────────────────────────────
+
+model Supplier {
+  supplier_id   String       @id @default(uuid())
+  supplier_name String
+  contact_name  String?
+  phone         String?
+  email         String?
+  address       String?
+  website       String?
+  description   String?
+  status        EntityStatus @default(ACTIVE)
+  created_at    DateTime     @default(now())
+  updated_at    DateTime     @updatedAt
+
+  import_orders ImportOrder[]
+
+  @@map("suppliers")
+}
+
+// ─── 6. Nhập kho ─────────────────────────────────────────────────────
+
+model ImportOrder {
+  import_id    String      @id @default(uuid())
+  import_code  String      @unique
+  supplier_id  String?
+  supplier     Supplier?   @relation(fields: [supplier_id], references: [supplier_id])
+  warehouse_id String
+  warehouse    Warehouse   @relation(fields: [warehouse_id], references: [warehouse_id])
+  created_by   String
+  creator      User        @relation(fields: [created_by], references: [user_id])
+  import_date  DateTime    @default(now())
+  status       OrderStatus @default(DRAFT)
+  note         String?
+  created_at   DateTime    @default(now())
+  updated_at   DateTime    @updatedAt
+
+  items ImportOrderItem[]
+
+  @@index([warehouse_id])
+  @@index([supplier_id])
+  @@map("import_orders")
+}
+
+model ImportOrderItem {
+  import_item_id String          @id @default(uuid())
+  import_id      String
+  import_order   ImportOrder     @relation(fields: [import_id], references: [import_id])
+  item_id        String
+  item           Item            @relation(fields: [item_id], references: [item_id])
+  location_id    String
+  location       StorageLocation @relation(fields: [location_id], references: [location_id])
+  quantity       Int
+  unit_price     Decimal?        @db.Decimal(14, 2)
+  batch_number   String?
+  note           String?
+
+  @@index([import_id])
+  @@index([item_id])
+  @@map("import_order_items")
+}
+
+// ─── 7. Xuất kho ─────────────────────────────────────────────────────
+
+model ExportOrder {
+  export_id    String      @id @default(uuid())
+  export_code  String      @unique
+  warehouse_id String
+  warehouse    Warehouse   @relation(fields: [warehouse_id], references: [warehouse_id])
+  requested_by String
+  requester    User        @relation("ExportRequestedBy", fields: [requested_by], references: [user_id])
+  approved_by  String?
+  approver     User?       @relation("ExportApprovedBy", fields: [approved_by], references: [user_id])
+  export_date  DateTime    @default(now())
+  purpose      String?
+  project_name String?
+  status       OrderStatus @default(DRAFT)
+  note         String?
+  created_at   DateTime    @default(now())
+  updated_at   DateTime    @updatedAt
+
+  items ExportOrderItem[]
+
+  @@index([warehouse_id])
+  @@map("export_orders")
+}
+
+model ExportOrderItem {
+  export_item_id String          @id @default(uuid())
+  export_id      String
+  export_order   ExportOrder     @relation(fields: [export_id], references: [export_id])
+  item_id        String
+  item           Item            @relation(fields: [item_id], references: [item_id])
+  location_id    String
+  location       StorageLocation @relation(fields: [location_id], references: [location_id])
+  quantity       Int
+  note           String?
+
+  @@index([export_id])
+  @@index([item_id])
+  @@map("export_order_items")
+}
+
+// ─── 8. Chuyển kho ───────────────────────────────────────────────────
+
+model TransferOrder {
+  transfer_id       String      @id @default(uuid())
+  transfer_code     String      @unique
+  from_warehouse_id String
+  from_warehouse    Warehouse   @relation("TransferFromWarehouse", fields: [from_warehouse_id], references: [warehouse_id])
+  to_warehouse_id   String
+  to_warehouse      Warehouse   @relation("TransferToWarehouse", fields: [to_warehouse_id], references: [warehouse_id])
+  created_by        String
+  creator           User        @relation(fields: [created_by], references: [user_id])
+  transfer_date     DateTime    @default(now())
+  status            OrderStatus @default(DRAFT)
+  note              String?
+  created_at        DateTime    @default(now())
+  updated_at        DateTime    @updatedAt
+
+  items TransferOrderItem[]
+
+  @@index([from_warehouse_id])
+  @@index([to_warehouse_id])
+  @@map("transfer_orders")
+}
+
+model TransferOrderItem {
+  transfer_item_id String          @id @default(uuid())
+  transfer_id      String
+  transfer_order   TransferOrder   @relation(fields: [transfer_id], references: [transfer_id])
+  item_id          String
+  item             Item            @relation(fields: [item_id], references: [item_id])
+  from_location_id String
+  from_location    StorageLocation @relation("TransferFromLocation", fields: [from_location_id], references: [location_id])
+  to_location_id   String
+  to_location      StorageLocation @relation("TransferToLocation", fields: [to_location_id], references: [location_id])
+  quantity         Int
+  note             String?
+
+  @@index([transfer_id])
+  @@index([item_id])
+  @@map("transfer_order_items")
+}
+
+// ─── 9. Thu hồi ──────────────────────────────────────────────────────
+
+model RecoveryOrder {
+  recovery_id   String      @id @default(uuid())
+  recovery_code String      @unique
+  warehouse_id  String
+  warehouse     Warehouse   @relation(fields: [warehouse_id], references: [warehouse_id])
+  created_by    String
+  creator       User        @relation(fields: [created_by], references: [user_id])
+  recovery_date DateTime    @default(now())
+  reason        String?
+  status        OrderStatus @default(DRAFT)
+  note          String?
+  created_at    DateTime    @default(now())
+  updated_at    DateTime    @updatedAt
+
+  items RecoveryOrderItem[]
+
+  @@index([warehouse_id])
+  @@map("recovery_orders")
+}
+
+model RecoveryOrderItem {
+  recovery_item_id String          @id @default(uuid())
+  recovery_id      String
+  recovery_order   RecoveryOrder   @relation(fields: [recovery_id], references: [recovery_id])
+  item_id          String
+  item             Item            @relation(fields: [item_id], references: [item_id])
+  location_id      String
+  location         StorageLocation @relation(fields: [location_id], references: [location_id])
+  quantity         Int
+  note             String?
+
+  @@index([recovery_id])
+  @@index([item_id])
+  @@map("recovery_order_items")
+}
+
+// ─── 10. Kiểm kê ─────────────────────────────────────────────────────
+
+model StocktakeSession {
+  stocktake_id   String      @id @default(uuid())
+  stocktake_code String      @unique
+  warehouse_id   String
+  warehouse      Warehouse   @relation(fields: [warehouse_id], references: [warehouse_id])
+  created_by     String
+  creator        User        @relation(fields: [created_by], references: [user_id])
+  stocktake_date DateTime    @default(now())
+  status         OrderStatus @default(DRAFT)
+  note           String?
+  created_at     DateTime    @default(now())
+  updated_at     DateTime    @updatedAt
+
+  items StocktakeSessionItem[]
+
+  @@index([warehouse_id])
+  @@map("stocktake_sessions")
+}
+
+model StocktakeSessionItem {
+  stocktake_item_id String           @id @default(uuid())
+  stocktake_id      String
+  stocktake_session StocktakeSession @relation(fields: [stocktake_id], references: [stocktake_id])
+  item_id           String
+  item              Item             @relation(fields: [item_id], references: [item_id])
+  location_id       String
+  location          StorageLocation  @relation(fields: [location_id], references: [location_id])
+  system_quantity   Int
+  actual_quantity   Int?
+  difference        Int?
+  note              String?
+
+  @@index([stocktake_id])
+  @@index([item_id])
+  @@map("stocktake_session_items")
+}
+
+// ─── 11. Thanh lý ────────────────────────────────────────────────────
+
+model LiquidationOrder {
+  liquidation_id   String      @id @default(uuid())
+  liquidation_code String      @unique
+  warehouse_id     String
+  warehouse        Warehouse   @relation(fields: [warehouse_id], references: [warehouse_id])
+  created_by       String
+  creator          User        @relation("LiquidationCreatedBy", fields: [created_by], references: [user_id])
+  approved_by      String?
+  approver         User?       @relation("LiquidationApprovedBy", fields: [approved_by], references: [user_id])
+  liquidation_date DateTime    @default(now())
+  reason           String?
+  status           OrderStatus @default(DRAFT)
+  note             String?
+  created_at       DateTime    @default(now())
+  updated_at       DateTime    @updatedAt
+
+  items LiquidationOrderItem[]
+
+  @@index([warehouse_id])
+  @@map("liquidation_orders")
+}
+
+model LiquidationOrderItem {
+  liquidation_item_id String           @id @default(uuid())
+  liquidation_id      String
+  liquidation_order   LiquidationOrder @relation(fields: [liquidation_id], references: [liquidation_id])
+  item_id             String
+  item                Item             @relation(fields: [item_id], references: [item_id])
+  location_id         String
+  location            StorageLocation  @relation(fields: [location_id], references: [location_id])
+  quantity            Int
+  note                String?
+
+  @@index([liquidation_id])
+  @@index([item_id])
+  @@map("liquidation_order_items")
+}
+
+// ─── 12. Lịch sử biến động kho ───────────────────────────────────────
+
+model StockMovement {
+  movement_id    String          @id @default(uuid())
+  item_id        String
+  item           Item            @relation(fields: [item_id], references: [item_id])
+  warehouse_id   String
+  warehouse      Warehouse       @relation(fields: [warehouse_id], references: [warehouse_id])
+  location_id    String
+  location       StorageLocation @relation(fields: [location_id], references: [location_id])
+  movement_type  MovementType
+  quantity       Int
+  reference_type ReferenceType
+  reference_id   String
+  performed_by   String
+  performer      User            @relation(fields: [performed_by], references: [user_id])
+  movement_date  DateTime        @default(now())
+  note           String?
+
+  @@index([item_id])
+  @@index([warehouse_id])
+  @@index([reference_type, reference_id])
+  @@map("stock_movements")
+}
