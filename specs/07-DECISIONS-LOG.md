@@ -103,3 +103,8 @@
 - Bối cảnh: `00-OVERVIEW.md` mục 6 liệt kê "Quản lý kho: ...thực hiện kiểm kê/thanh lý" — không có "thanh lý" trong danh sách việc của "Nhân viên kho" (staff chỉ có "Nhập/xuất/chuyển kho, thu hồi vật tư").
 - Quyết định: `POST /api/liquidation-orders` và `POST /:id/confirm` dùng `authorize(...MANAGE_ROLES)` (admin+manager), KHÔNG dùng `STAFF_WRITE_ROLES` như E1-E4. Đây là nghiệp vụ nghiệp vụ thứ 2 (cùng nhóm với E5 kiểm kê) bị giới hạn khỏi staff. Đã verify thực tế: token staff gọi `POST /api/liquidation-orders` → 403.
 - Ảnh hưởng tới: Backend, Web/Mobile (nút "Tạo phiếu thanh lý" chỉ hiện với role admin/quản lý kho, ẩn với nhân viên kho — giống màn kiểm kê).
+
+## 2026-09-11 — E7: thứ tự sắp xếp lịch sử biến động kho
+- Bối cảnh: `02-BACKEND-SPEC.md` không nói `GET /api/stock-movements` trả về theo thứ tự tăng dần hay giảm dần theo thời gian.
+- Quyết định: `orderBy: { movement_date: 'asc' }` — TĂNG DẦN (cũ nhất trước), khác với các danh sách phiếu (`import_orders`, `export_orders`...) đang sort `created_at: 'desc'` (mới nhất trước). Lý do: đây là "lịch sử biến động" của 1 vật tư/kho — đọc theo trình tự xảy ra (timeline) tự nhiên hơn khi xem lại quá trình tăng/giảm tồn kho theo mốc thời gian, khác với danh sách phiếu (nơi người dùng quan tâm phiếu MỚI TẠO trước tiên). Nếu FE muốn hiển thị mới nhất trước, tự đảo mảng ở client hoặc yêu cầu bổ sung param sort sau.
+- Ảnh hưởng tới: Web/Mobile (màn lịch sử biến động kho nhận dữ liệu theo thứ tự cũ→mới, không phải mới→cũ như các danh sách phiếu khác).
