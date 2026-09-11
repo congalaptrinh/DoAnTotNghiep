@@ -59,6 +59,33 @@ async function decrementInventory(tx, { item_id, warehouse_id, location_id, quan
   });
 }
 
+// SET tuyệt đối tồn kho tại 1 vị trí (dùng cho kiểm kê — khác increment/decrement là cộng/trừ tương đối).
+// Không kiểm tra available_quantity vì đây là điều chỉnh cho khớp thực tế, không phải giao dịch xuất.
+async function setInventoryQuantity(tx, { item_id, warehouse_id, location_id, quantity }) {
+  const existing = await findInventoryRow(tx, { item_id, warehouse_id, location_id });
+
+  if (!existing) {
+    return tx.inventory.create({
+      data: {
+        item_id,
+        warehouse_id,
+        location_id,
+        quantity,
+        reserved_quantity: 0,
+        available_quantity: quantity,
+      },
+    });
+  }
+
+  return tx.inventory.update({
+    where: { inventory_id: existing.inventory_id },
+    data: {
+      quantity,
+      available_quantity: quantity - existing.reserved_quantity,
+    },
+  });
+}
+
 // Ghi 1 dòng lịch sử biến động kho.
 async function recordMovement(tx, {
   item_id,
@@ -86,4 +113,4 @@ async function recordMovement(tx, {
   });
 }
 
-module.exports = { incrementInventory, decrementInventory, recordMovement };
+module.exports = { incrementInventory, decrementInventory, setInventoryQuantity, recordMovement };
