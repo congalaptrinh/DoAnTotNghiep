@@ -20,4 +20,9 @@ async function confirm(req, res) {
   success(res, await importOrderService.confirm(req.params.id, req.user.user_id), 'Xác nhận nhập kho thành công');
 }
 
-module.exports = { list, getById, create, confirm };
+async function createFromAi(req, res) {
+  const data = createImportOrderSchema.parse(req.body);
+  success(res, await importOrderService.createFromAi(data, req.user.user_id), 'Tạo phiếu nhập kho từ AI thành công', 201);
+}
+
+module.exports = { list, getById, create, confirm, createFromAi };

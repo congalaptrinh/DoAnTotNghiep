@@ -108,3 +108,40 @@
 - Bối cảnh: `02-BACKEND-SPEC.md` không nói `GET /api/stock-movements` trả về theo thứ tự tăng dần hay giảm dần theo thời gian.
 - Quyết định: `orderBy: { movement_date: 'asc' }` — TĂNG DẦN (cũ nhất trước), khác với các danh sách phiếu (`import_orders`, `export_orders`...) đang sort `created_at: 'desc'` (mới nhất trước). Lý do: đây là "lịch sử biến động" của 1 vật tư/kho — đọc theo trình tự xảy ra (timeline) tự nhiên hơn khi xem lại quá trình tăng/giảm tồn kho theo mốc thời gian, khác với danh sách phiếu (nơi người dùng quan tâm phiếu MỚI TẠO trước tiên). Nếu FE muốn hiển thị mới nhất trước, tự đảo mảng ở client hoặc yêu cầu bổ sung param sort sau.
 - Ảnh hưởng tới: Web/Mobile (màn lịch sử biến động kho nhận dữ liệu theo thứ tự cũ→mới, không phải mới→cũ như các danh sách phiếu khác).
+
+## 2026-09-11 — F1: cấu trúc JSON mock CHÍNH XÁC của `POST /api/ai/detect` (hợp đồng dữ liệu cho Web/Mobile)
+- Bối cảnh: AI Service (Python FastAPI + YOLO) chưa tồn tại. `05-AI-SERVICE-SPEC.md` chỉ đưa cấu trúc ví dụ/gợi ý ("cấu trúc trên là gợi ý — điều chỉnh field cho khớp"). Backend phải CHỐT CỨNG 1 cấu trúc cụ thể ngay bây giờ để Web/Mobile code UI luồng "nhập kho bằng AI" (3 bước: upload ảnh → hiển thị bounding box + bảng xác nhận → gọi `/from-ai`) mà không phải sửa lại khi AI Service thật xong.
+- Quyết định — response `POST /api/ai/detect` (200, field `data` bên trong response chuẩn `{success,data,message}`):
+  ```json
+  {
+    "success": true,
+    "data": {
+      "detections": [
+        {
+          "class_name": "resistor",
+          "confidence": 0.92,
+          "bounding_box": { "x": 120, "y": 80, "width": 40, "height": 25 }
+        }
+      ],
+      "summary": [
+        { "class_name": "resistor", "count": 5 },
+        { "class_name": "ic_chip", "count": 2 }
+      ],
+      "annotated_image": "data:image/jpeg;base64,<...>"
+    },
+    "message": "Nhận diện thành công (MOCK — chưa tích hợp AI Service thật)"
+  }
+  ```
+  - `detections`: mảng, MỖI phần tử là 1 vật thể nhận diện được (không gộp) — `class_name` (string), `confidence` (number, 0-1), `bounding_box` (object 4 field `x`/`y`/`width`/`height`, đều number, đơn vị pixel trên ảnh gốc).
+  - `summary`: mảng đã gộp theo `class_name` — `class_name` (string), `count` (number nguyên) — Web/Mobile dùng mảng này để hiển thị bảng xác nhận số lượng theo loại, KHÔNG cần tự đếm lại từ `detections`.
+  - `annotated_image`: string, luôn có tiền tố `data:image/<mime>;base64,` (data URI, không phải URL) — hiện tại ở bước mock là CHÍNH ẢNH GỐC người dùng upload (encode lại base64, không vẽ bounding box thật vì chưa có OpenCV/YOLO); khi AI Service thật tích hợp, field này vẫn giữ đúng format data URI nhưng nội dung sẽ là ảnh đã vẽ bounding box thật.
+  - Request: `multipart/form-data`, field bắt buộc tên `image` (không phải `file` hay tên khác), giới hạn 10MB (Multer `limits.fileSize`).
+  - Thiếu field `image` → 400, message "Vui lòng chọn ảnh để nhận diện (field "image")".
+  - RBAC: `STAFF_WRITE_ROLES` (admin+manager+staff) — khớp `00-OVERVIEW.md` "Nhân viên kho: ...dùng AI hỗ trợ nhập kho".
+- Ảnh hưởng tới: **Web/Mobile (QUAN TRỌNG — đây là hợp đồng dữ liệu cố định)**: form upload ảnh phải đặt tên field `image`; bảng xác nhận trước khi tạo phiếu nhập nên dựng từ `summary` (loại + số lượng), còn `detections` dùng để vẽ overlay bounding box lên `annotated_image` nếu cần hiển thị chi tiết từng vật thể; `annotated_image` render trực tiếp bằng `<img src="...">` vì đã là data URI, không cần tải thêm.
+
+## 2026-09-11 — F2: gộp create+confirm trong 1 transaction cho luồng AI
+- Bối cảnh: `02-BACKEND-SPEC.md` mục 4.1 gợi ý "có thể gộp tạo + confirm làm 1 bước" cho luồng nhập kho bằng AI nhưng không bắt buộc cách làm cụ thể.
+- Quyết định: viết hàm riêng `importOrder.service.js#createFromAi()` — KHÔNG gọi lại `create()` rồi `confirm()` nối tiếp nhau (2 lệnh gọi Prisma riêng, 2 transaction riêng), mà viết logic tạo phiếu + `incrementInventory` + `recordMovement` + set `status=CONFIRMED` tất cả bên trong **1** `prisma.$transaction(async (tx) => {...})` duy nhất. Lý do: nếu tách 2 bước (dù gọi liên tiếp trong cùng request), giữa 2 bước có thể có 1 khoảng hở nơi phiếu tồn tại ở trạng thái `DRAFT` mà hệ thống (hoặc request khác) có thể đọc thấy; gộp vào 1 transaction đảm bảo bên ngoài chỉ BAO GIỜ thấy phiếu ở trạng thái `CONFIRMED` (transaction chỉ commit sau khi mọi bước xong) — đúng tinh thần "người dùng đã xác nhận trên UI rồi, hệ thống không cần thêm bước duyệt trung gian nào nữa".
+- Đây là route/hàm DUY NHẤT trong toàn bộ nghiệp vụ kho làm theo kiểu "tạo xong = xác nhận luôn" — mọi nghiệp vụ khác (E1-E6) đều giữ 2 bước tách biệt (tạo DRAFT → gọi `/confirm` riêng).
+- Ảnh hưởng tới: Backend (không tạo route `GET`/`PUT` sửa phiếu `from-ai` ở trạng thái DRAFT vì trạng thái đó không bao giờ tồn tại ra bên ngoài), Web/Mobile (luồng AI trên UI gọi thẳng 1 API `/from-ai` sau khi người dùng bấm "Xác nhận tạo phiếu", không cần bước "Xác nhận phiếu" riêng như các luồng nhập kho thường).

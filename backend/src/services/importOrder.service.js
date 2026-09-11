@@ -89,4 +89,54 @@ async function confirm(id, userId) {
   return getById(id);
 }
 
-module.exports = { list, getById, create, confirm };
+// Dùng cho luồng nhập kho bằng AI (F2, specs/06-BUILD-CHECKLIST.md): nhận dữ liệu đã được
+// người dùng xác nhận/chỉnh sửa trên UI (sau bước gọi /api/ai/detect), tạo phiếu nhập VÀ
+// xác nhận NGAY trong CÙNG 1 transaction — không tách 2 bước tạo/confirm như flow thường,
+// vì người dùng đã tự "duyệt" kết quả AI trước khi gọi API này rồi (xem 07-DECISIONS-LOG.md).
+async function createFromAi(data, userId) {
+  const { items, ...rest } = data;
+
+  const importId = await prisma.$transaction(async (tx) => {
+    const order = await tx.importOrder.create({
+      data: {
+        ...rest,
+        import_code: generateCode('IMP'),
+        created_by: userId,
+        status: 'DRAFT',
+        items: { create: items },
+      },
+      include: { items: true },
+    });
+
+    for (const line of order.items) {
+      await incrementInventory(tx, {
+        item_id: line.item_id,
+        warehouse_id: order.warehouse_id,
+        location_id: line.location_id,
+        quantity: line.quantity,
+      });
+      await recordMovement(tx, {
+        item_id: line.item_id,
+        warehouse_id: order.warehouse_id,
+        location_id: line.location_id,
+        movement_type: 'IMPORT',
+        quantity: line.quantity,
+        reference_type: 'IMPORT_ORDER',
+        reference_id: order.import_id,
+        performed_by: userId,
+        note: order.note,
+      });
+    }
+
+    await tx.importOrder.update({
+      where: { import_id: order.import_id },
+      data: { status: 'CONFIRMED' },
+    });
+
+    return order.import_id;
+  });
+
+  return getById(importId);
+}
+
+module.exports = { list, getById, create, confirm, createFromAi };
