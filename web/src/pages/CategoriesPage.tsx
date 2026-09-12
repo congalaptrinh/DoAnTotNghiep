@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import PageLayout, { Card, Badge, Btn, Th, Td } from '../components/PageLayout';
 import { Tabs } from '../components/ui';
+import { usePermission } from '../hooks/usePermission';
 
 const categories = [
   {
@@ -54,6 +55,9 @@ const itemsData = [
 export default function CategoriesPage() {
   const [tab, setTab] = useState<'categories' | 'items'>('categories');
   const [expanded, setExpanded] = useState<string[]>(['DM-001', 'DM-002']);
+  const { canWrite } = usePermission();
+  /** Danh mục (item_categories) và Vật tư (items) hiện cùng 1 quyền ghi (admin+manager) — vẫn tra theo resource, không giả định "cả trang 1 quyền", để không lệch nếu Backend đổi RBAC sau này. */
+  const canWriteCurrentTab = tab === 'categories' ? canWrite('item_categories') : canWrite('items');
 
   const toggle = (id: string) => {
     setExpanded((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
@@ -73,12 +77,14 @@ export default function CategoriesPage() {
               { value: 'items', label: 'Vật tư' },
             ]}
           />
-          <Btn>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 5v14M5 12l7-7 7 7" />
-            </svg>
-            {tab === 'categories' ? 'Thêm danh mục' : 'Thêm vật tư'}
-          </Btn>
+          {canWriteCurrentTab && (
+            <Btn>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 5v14M5 12l7-7 7 7" />
+              </svg>
+              {tab === 'categories' ? 'Thêm danh mục' : 'Thêm vật tư'}
+            </Btn>
+          )}
         </>
       }
     >

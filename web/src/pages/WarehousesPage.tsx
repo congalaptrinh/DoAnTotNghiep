@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import PageLayout, { Card, Badge, Btn, Th, Td } from '../components/PageLayout';
 import { Tabs } from '../components/ui';
+import { usePermission } from '../hooks/usePermission';
 
 const warehouses = [
   { id: 'KHO-A', name: 'Kho A - Chính', address: '12 Lê Văn Lương, P.Tân Phú, Q.7, TP.HCM', manager: 'Nguyễn Văn An', phone: '0901 234 567', locations: 120, used: 87, status: 'active', type: 'main' },
@@ -25,8 +26,11 @@ const locations = [
 export default function WarehousesPage() {
   const [tab, setTab] = useState<'warehouses' | 'locations'>('warehouses');
   const [whFilter, setWhFilter] = useState('all');
+  const { canWrite } = usePermission();
 
   const filteredLocs = locations.filter((l) => whFilter === 'all' || l.warehouse === whFilter);
+  /** Kho và Vị trí lưu trữ có quyền ghi KHÁC NHAU (staff được sửa vị trí nhưng không được sửa kho) — xem `config/permissions.ts`. */
+  const canWriteCurrentTab = tab === 'warehouses' ? canWrite('warehouses') : canWrite('storage_locations');
 
   return (
     <PageLayout
@@ -42,12 +46,14 @@ export default function WarehousesPage() {
               { value: 'locations', label: 'Vị trí lưu trữ' },
             ]}
           />
-          <Btn>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 5v14M5 12l7-7 7 7" />
-            </svg>
-            {tab === 'warehouses' ? 'Thêm kho' : 'Thêm vị trí'}
-          </Btn>
+          {canWriteCurrentTab && (
+            <Btn>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 5v14M5 12l7-7 7 7" />
+              </svg>
+              {tab === 'warehouses' ? 'Thêm kho' : 'Thêm vị trí'}
+            </Btn>
+          )}
         </>
       }
     >

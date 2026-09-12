@@ -23,7 +23,42 @@ export const PAGE_ACCESS: Record<Page, UserRole[]> = {
   roles: ['admin'],
 };
 
+/**
+ * Phân quyền GHI theo TỪNG RESOURCE thật của Backend — mịn hơn `PAGE_ACCESS`
+ * (1 trang có thể gộp ≥2 resource qua tab, ví dụ `WarehousesPage` = warehouses
+ * + storage_locations, `CategoriesPage` = item_categories + items — 2 resource
+ * trong 1 trang có thể có quyền ghi KHÁC NHAU). Khớp CHÍNH XÁC middleware
+ * `authorize(...)` của từng route thật — xem `backend/src/routes/*.js` +
+ * `backend/src/utils/roles.js` (ADMIN_ONLY/MANAGE_ROLES/STAFF_WRITE_ROLES/
+ * ALL_ROLES). Đọc (GET) mọi resource đều là `ALL_ROLES` (trừ users/roles là
+ * ADMIN_ONLY) nên không cần map riêng cho đọc — chỉ cần map GHI (POST/PUT/
+ * DELETE) vì đó là nơi có khác biệt cần phân biệt ở UI (nút Thêm/Sửa/Xoá).
+ */
+export const RESOURCE_WRITE_ACCESS = {
+  users: ['admin'],
+  roles: ['admin'],
+  item_categories: ['admin', 'warehouse_manager'],
+  items: ['admin', 'warehouse_manager'],
+  warehouses: ['admin', 'warehouse_manager'],
+  storage_locations: ['admin', 'warehouse_manager', 'warehouse_staff'],
+  suppliers: ['admin', 'warehouse_manager'],
+  import_orders: ['admin', 'warehouse_manager', 'warehouse_staff'],
+  export_orders: ['admin', 'warehouse_manager', 'warehouse_staff'],
+  transfer_orders: ['admin', 'warehouse_manager', 'warehouse_staff'],
+  recovery_orders: ['admin', 'warehouse_manager', 'warehouse_staff'],
+  stocktake_sessions: ['admin', 'warehouse_manager'],
+  liquidation_orders: ['admin', 'warehouse_manager'],
+  ai_detect: ['admin', 'warehouse_manager', 'warehouse_staff'],
+} as const satisfies Record<string, UserRole[]>;
+
+export type WritableResource = keyof typeof RESOURCE_WRITE_ACCESS;
+
 export function canAccessPage(role: UserRole | null | undefined, page: Page): boolean {
   if (!role) return false;
   return PAGE_ACCESS[page].includes(role);
+}
+
+export function canWriteResource(role: UserRole | null | undefined, resource: WritableResource): boolean {
+  if (!role) return false;
+  return (RESOURCE_WRITE_ACCESS[resource] as readonly UserRole[]).includes(role);
 }
