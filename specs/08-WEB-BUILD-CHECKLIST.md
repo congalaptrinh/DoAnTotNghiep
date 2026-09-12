@@ -43,8 +43,10 @@
 
 ## Giai đoạn E — Danh mục (CRUD UI)
 
-- [ ] E1. Danh mục vật tư (`item_categories`) — bảng cây cha-con.
-- [ ] E2. Vật tư (`items`) — bảng + form thêm/sửa, upload ảnh (nếu có).
+- [x] E1. Danh mục vật tư (`item_categories`) — bảng cây cha-con. Note (2026-09-13): CRUD thật đầy đủ (create/update/delete) qua `itemCategory.service.ts`, gate quyền qua `canWrite('item_categories')` (đã có từ Giai đoạn C). Phát hiện: mock có field `code` không tồn tại trong schema thật — đã bỏ, badge lấy 2 ký tự đầu `category_name`. Phát hiện quan trọng về hành vi xoá (children bị mồ côi thay vì chặn 409, khác items→category): xem `07-DECISIONS-LOG.md`.
+- [x] E2. Vật tư (`items`) — bảng + form thêm/sửa, upload ảnh (nếu có). Note (2026-09-13): CRUD thật đầy đủ qua `item.service.ts`. **Bỏ qua upload ảnh** — Backend chỉ có field `image_url` (chuỗi URL, không có endpoint lưu file cho items, khác `POST /api/ai/detect` có Multer riêng) — thêm ô nhập URL trần sẽ không hữu ích khi không ai có URL ảnh thật để dán; để dành quyết định khi có nhu cầu thật (cần thống nhất cơ chế lưu trữ file trước). DELETE = soft-delete (status→INACTIVE), verify đúng hành vi + lỗi 409 khi category còn item tham chiếu — chi tiết trong `07-DECISIONS-LOG.md`.
+
+**Bằng chứng kiểm thử thật (Playwright, dựng cả Backend+Web thật):** CRUD đầy đủ (tạo/sửa danh mục+vật tư qua network log xác nhận đúng payload/đích); RBAC nút hành động (`report_viewer` thấy dữ liệu nhưng 0 nút Thêm/Sửa/Xoá, `warehouse_staff` bị chặn hẳn ở route vì không có trong `PAGE_ACCESS.categories`); xoá danh mục còn vật tư tham chiếu → toast đỏ hiện đúng message 409 thật từ Backend (không phải màn trắng); soft-delete vật tư xong thử xoá lại category → vẫn đúng bị chặn 409 (soft-delete không gỡ FK). Chi tiết đầy đủ + ảnh chụp: `07-DECISIONS-LOG.md`.
 - [ ] E3. Kho (`warehouses`) — danh sách + form.
 - [ ] E4. Vị trí lưu trữ (`storage_locations`) — bảng theo từng kho + form.
 - [ ] E5. Nhà cung cấp (`suppliers`) — bảng + form.

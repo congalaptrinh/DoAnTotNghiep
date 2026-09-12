@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { Btn } from './PageLayout';
 
 /**
  * Component dùng chung bổ sung (Giai đoạn B) — thay cho các đoạn code lặp lại
@@ -102,6 +103,35 @@ export function Modal({
         {footer && <div className="flex gap-3 mt-6">{footer}</div>}
       </div>
     </div>
+  );
+}
+
+/* ───────────────────────── ConfirmDialog ───────────────────────── */
+
+/** Xác nhận trước khi Xoá (hoặc hành động phá huỷ khác) — dùng chung cho mọi CRUD từ Giai đoạn E trở đi. */
+export function ConfirmDialog({
+  open, title, message, confirmLabel = 'Xoá', danger = true, loading = false, onConfirm, onCancel,
+}: {
+  open: boolean; title: string; message: ReactNode; confirmLabel?: string; danger?: boolean;
+  loading?: boolean; onConfirm: () => void; onCancel: () => void;
+}) {
+  return (
+    <Modal
+      open={open}
+      onClose={onCancel}
+      title={title}
+      size="sm"
+      footer={
+        <>
+          <Btn variant={danger ? 'danger' : 'primary'} onClick={onConfirm} disabled={loading}>
+            {loading ? 'Đang xử lý...' : confirmLabel}
+          </Btn>
+          <Btn variant="secondary" onClick={onCancel} disabled={loading}>Huỷ</Btn>
+        </>
+      }
+    >
+      <p className="text-sm text-gray-600">{message}</p>
+    </Modal>
   );
 }
 
