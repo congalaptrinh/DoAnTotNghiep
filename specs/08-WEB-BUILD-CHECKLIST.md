@@ -35,9 +35,11 @@
 
 ## Giai đoạn D — Dashboard
 
-- [ ] D1. Hero banner + 4 stat card (gọi API tổng hợp — nếu Backend chưa có endpoint tổng hợp riêng, gọi kết hợp `GET /api/inventory` + `GET /api/import-orders?status=PENDING`... và tính ở FE, ghi rõ cách này vào decisions log).
-- [ ] D2. Biểu đồ Nhập/Xuất theo tuần (dùng `recharts` hoặc tương tự) — nguồn dữ liệu từ `GET /api/stock-movements`.
-- [ ] D3. Feed hoạt động gần đây.
+- [x] D1. Hero banner + 4 stat card (gọi API tổng hợp — nếu Backend chưa có endpoint tổng hợp riêng, gọi kết hợp `GET /api/inventory` + `GET /api/import-orders?status=PENDING`... và tính ở FE, ghi rõ cách này vào decisions log). Note (2026-09-12): đúng như dự đoán, Backend không có endpoint tổng hợp — `hooks/useDashboardStats.ts` gọi kết hợp `items`/`inventory`/`warehouses` + 6 loại phiếu (`status=DRAFT`) qua React Query (`QueryClientProvider` được mount lần đầu ở `App.tsx`, tuy cài từ Giai đoạn A1 nhưng chưa từng dùng tới). "Phiếu chờ duyệt" đổi nhãn thành "Phiếu chờ xử lý" cho khớp `OrderStatus` thật (không có bước duyệt trung gian). Chi tiết công thức từng stat + service mới tạo: xem `07-DECISIONS-LOG.md`.
+- [x] D2. Biểu đồ Nhập/Xuất theo tuần (dùng `recharts` hoặc tương tự) — nguồn dữ liệu từ `GET /api/stock-movements`. Note (2026-09-12): giữ SVG tự vẽ có sẵn (đủ dùng, không cần thêm thư viện `recharts`), đổi nguồn từ mock sang tính thật từ `stock_movements` 7 ngày gần nhất. Phát hiện + xử lý đúng: cột `quantity` trong DB luôn dương cho hầu hết loại nghiệp vụ (dấu +/- chỉ có ý nghĩa qua `movement_type`), riêng kiểm kê lưu dấu sẵn — viết hàm `signedQuantity()` xử lý riêng 2 trường hợp.
+- [x] D3. Feed hoạt động gần đây. Note (2026-09-12): 5 dòng `stock_movements` mới nhất (đảo mảng ở client vì Backend luôn trả cũ→mới). Không bịa thêm mã phiếu (order code) vì `stock_movements` không có sẵn field này — mô tả dựa đúng trên field thật (vật tư/số lượng/kho/vị trí/người thực hiện).
+
+**Bằng chứng kiểm thử thật (Playwright, dựng cả Backend+Web thật, tạo dữ liệu qua chính API — xem chi tiết trong `07-DECISIONS-LOG.md`):** tạo 2 vật tư, 2 kho (1 active/1 inactive), nhập 100 + xuất 60 (còn tồn 40 < ngưỡng 50), 1 phiếu nhập + 1 phiếu xuất để DRAFT → Dashboard hiện đúng: Tổng vật tư=2, Sắp hết hàng=1, Phiếu chờ xử lý=2 ("1 nhập kho, 1 xuất kho"), Số kho hoạt động=1/tổng 2; biểu đồ đúng cột hôm nay (nhập 100/xuất 60); feed hoạt động đúng thứ tự mới→cũ; cảnh báo tồn kho thấp đúng "40/50". Không lỗi console. Dữ liệu test được GIỮ LẠI (không dọn) để dùng cho test thủ công H1/H3 sau này.
 
 ## Giai đoạn E — Danh mục (CRUD UI)
 
