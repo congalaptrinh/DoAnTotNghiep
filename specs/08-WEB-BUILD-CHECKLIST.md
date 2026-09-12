@@ -90,11 +90,11 @@
 
 ## Giai đoạn H — Kiểm thử & hoàn thiện
 
-- [ ] H1. Test thủ công đủ 4 vai trò — đăng nhập lần lượt 4 tài khoản (dùng seed data Backend), xác nhận đúng menu/nút hiện-ẩn theo từng vai trò.
-- [ ] H2. Test responsive cơ bản (không bắt buộc tối ưu mobile vì đã có app riêng, nhưng không được vỡ layout ở màn hình laptop nhỏ).
-- [ ] H3. Test luồng nhập kho bằng AI end-to-end với Backend thật (không mock ở FE).
-- [ ] H4. Rà lại toàn bộ để không còn màu/spacing tự chế lệch khỏi token đã định nghĩa ở A2.
-- [ ] H5. Cập nhật `07-DECISIONS-LOG.md` lần cuối cho giai đoạn Web App.
+- [x] H1. Test thủ công đủ 4 vai trò — đăng nhập lần lượt 4 tài khoản (dùng seed data Backend), xác nhận đúng menu/nút hiện-ẩn theo từng vai trò. Note (2026-09-13): quét TOÀN BỘ ma trận 4 vai trò × 14 trang bằng Playwright (không chỉ mẫu đại diện) — **112/112 lượt kiểm tra pass** (sidebar hiện đúng + gõ thẳng URL chặn/cho vào đúng cho mọi tổ hợp). Riêng phần quyền GHI ở cấp nút (2 trang gộp resource: Categories viewer read-only, Warehouses staff chỉ sửa vị trí) đã verify kỹ ở Giai đoạn C/C4 trước đó — không cần lặp lại vì các trang nghiệp vụ F1-F6 có `PAGE_ACCESS == RESOURCE_WRITE_ACCESS` (ai thấy trang thì cũng ghi được), không tồn tại gap mới.
+- [x] H2. Test responsive cơ bản (không bắt buộc tối ưu mobile vì đã có app riêng, nhưng không được vỡ layout ở màn hình laptop nhỏ). Note (2026-09-13): kiểm tra tự động (`document.documentElement.scrollWidth` so `clientWidth`, dung sai 2px) tại 1366×768 cho ĐỦ 14 trang danh sách + 5 form/modal phức tạp nhất (Transfer 5-cột, Export 3-cột, Import AI wizard 2-cột, modal Kiểm kê, modal Người dùng) — **0/19 vỡ layout**.
+- [x] H3. Test luồng nhập kho bằng AI end-to-end với Backend thật (không mock ở FE). Note (2026-09-13): chạy lại TOÀN BỘ luồng từ đầu (không chỉ tái xác nhận bằng lời) sau khi đã hoàn tất F2-G3 — upload ảnh fixture thật → `/ai/detect` → map 2 nhóm vào vật tư+vị trí thật → `/import-orders/from-ai` → verify tồn kho tăng đúng qua API (RELAY +5, IC555 +2) — không có regression nào phát sinh từ các thay đổi sau F1.
+- [x] H4. Rà lại toàn bộ để không còn màu/spacing tự chế lệch khỏi token đã định nghĩa ở A2. Note (2026-09-13): audit bằng grep trên toàn bộ `pages/`+`components/`+`layouts/`+`contexts/`+`hooks/` — 0 kết quả hex trùng 8 giá trị token (`brand-from/to`, `danger/warning/success/info/accent`, `bg/surface/border`), 0 class Tailwind arbitrary-bracket màu (`bg-[#...]`), 0 `style={{...#hex}}` nội tuyến. 2 file được `07-DECISIONS-LOG.md` (Giai đoạn B) ghi chú "còn sót lại có chủ đích, dọn ở H4" (`LoginPage.tsx`, `SuppliersPage.tsx`) — kiểm tra lại thì đã được dọn từ trước (Giai đoạn C2 và E5 tương ứng), không còn việc gì phải làm thêm. Các màu Tailwind mặc định dùng làm điểm nhấn theo từng loại (VD `indigo-600` cho mã phiếu Nhập, `violet-600` cho Xuất, `purple-600` cho Thu hồi...) là quy ước có chủ đích từ Giai đoạn B (khác ý nghĩa "token" — token chỉ dành cho 8 màu ngữ nghĩa/thương hiệu dùng xuyên suốt, không phải màu nhận diện từng loại nghiệp vụ) — không phải lỗi.
+- [x] H5. Cập nhật `07-DECISIONS-LOG.md` lần cuối cho giai đoạn Web App.
 
 ---
 
