@@ -47,10 +47,12 @@
 - [x] E2. Vật tư (`items`) — bảng + form thêm/sửa, upload ảnh (nếu có). Note (2026-09-13): CRUD thật đầy đủ qua `item.service.ts`. **Bỏ qua upload ảnh** — Backend chỉ có field `image_url` (chuỗi URL, không có endpoint lưu file cho items, khác `POST /api/ai/detect` có Multer riêng) — thêm ô nhập URL trần sẽ không hữu ích khi không ai có URL ảnh thật để dán; để dành quyết định khi có nhu cầu thật (cần thống nhất cơ chế lưu trữ file trước). DELETE = soft-delete (status→INACTIVE), verify đúng hành vi + lỗi 409 khi category còn item tham chiếu — chi tiết trong `07-DECISIONS-LOG.md`.
 
 **Bằng chứng kiểm thử thật (Playwright, dựng cả Backend+Web thật):** CRUD đầy đủ (tạo/sửa danh mục+vật tư qua network log xác nhận đúng payload/đích); RBAC nút hành động (`report_viewer` thấy dữ liệu nhưng 0 nút Thêm/Sửa/Xoá, `warehouse_staff` bị chặn hẳn ở route vì không có trong `PAGE_ACCESS.categories`); xoá danh mục còn vật tư tham chiếu → toast đỏ hiện đúng message 409 thật từ Backend (không phải màn trắng); soft-delete vật tư xong thử xoá lại category → vẫn đúng bị chặn 409 (soft-delete không gỡ FK). Chi tiết đầy đủ + ảnh chụp: `07-DECISIONS-LOG.md`.
-- [ ] E3. Kho (`warehouses`) — danh sách + form.
-- [ ] E4. Vị trí lưu trữ (`storage_locations`) — bảng theo từng kho + form.
-- [ ] E5. Nhà cung cấp (`suppliers`) — bảng + form.
-- [ ] E6. Tồn kho — bảng chính, filter kho/vị trí, tìm kiếm, badge trạng thái (Thấp/Sắp hết/Ổn định — tính từ `min_stock` so với `quantity`).
+- [x] E3. Kho (`warehouses`) — danh sách + form. Note (2026-09-13): CRUD thật qua `warehouse.service.ts`, gate `canWrite('warehouses')`. Bỏ field mock không có schema (`type` main/sub).
+- [x] E4. Vị trí lưu trữ (`storage_locations`) — bảng theo từng kho + form. Note (2026-09-13): CRUD thật qua `storageLocation.service.ts` (mới), gate `canWrite('storage_locations')` — đúng bug đã fix ở Giai đoạn C (staff sửa được vị trí, không sửa được kho) áp dụng cho cả nút Sửa/Xoá.
+- [x] E5. Nhà cung cấp (`suppliers`) — bảng + form. Note (2026-09-13): CRUD thật qua `supplier.service.ts` (mới). Bỏ field mock không có schema (`category`/`rating`/`orders`/`short`) + bỏ 2 nút giả "Tạo đơn mua"/"Lịch sử" không có hành động thật.
+- [x] E6. Tồn kho — bảng chính, filter kho/vị trí, tìm kiếm, badge trạng thái (Thấp/Sắp hết/Ổn định — tính từ `min_stock` so với `quantity`). Note (2026-09-13): nối API thật `GET /api/inventory` (chỉ đọc, đúng vì Backend không có route ghi trực tiếp cho inventory). Trạng thái tính lại ở client theo `available_quantity` vs `item.min_stock`, nhất quán với `useDashboardStats.ts`.
+
+**Mức kiểm thử (theo quy tắc mới người dùng chốt)**: E3-E6 dùng đúng pattern RBAC + soft-delete đã kiểm chứng kỹ ở E1/E2 — chỉ code review (`backend/src/routes/*.js` xác nhận cả 3 đều soft-delete, không có case 409 đặc biệt) + 1 lượt Playwright smoke test (không lặp lại đủ 4 vai trò): tạo thật 1 kho+1 vị trí+1 NCC qua UI (toast thành công), soft-delete 1 kho, Tồn kho hiện đúng dữ liệu thật + lọc đúng. Không lỗi console. Chi tiết đầy đủ: `07-DECISIONS-LOG.md`.
 
 ## Giai đoạn F — Nghiệp vụ kho (mỗi nghiệp vụ: danh sách phiếu + tạo phiếu + xem chi tiết + nút xác nhận theo quyền)
 
