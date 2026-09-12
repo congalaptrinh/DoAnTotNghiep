@@ -1,5 +1,6 @@
 {
-  "description": "This AI-powered web application offers intelligent conversation capabilities, providing users with instant responses and assistance for various inquiries.",
+  "title": "TechStore WMS",
+  "description": "Hệ thống Quản lý Kho Linh kiện Điện tử — quản lý tồn kho, nhập/xuất/chuyển kho và nhận diện linh kiện tự động bằng AI.",
   "robots": {
     "index": false
   },

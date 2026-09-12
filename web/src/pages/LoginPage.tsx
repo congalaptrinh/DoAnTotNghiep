@@ -4,7 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { ApiError } from '../services/apiClient';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('admin@warehouse.local');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -129,14 +129,6 @@ export default function LoginPage() {
               {loading ? 'Đang đăng nhập...' : 'Đăng nhập'}
             </button>
           </form>
-
-          <div className="mt-8 p-4 bg-gray-50 rounded-xl border border-gray-100">
-            <p className="text-xs text-gray-500 font-medium mb-2">Tài khoản demo:</p>
-            <div className="space-y-1 text-xs text-gray-500">
-              <div><span className="text-gray-700 font-medium">Admin:</span> admin@warehouse.local</div>
-              <div><span className="text-gray-700 font-medium">Mật khẩu:</span> Admin@123</div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
