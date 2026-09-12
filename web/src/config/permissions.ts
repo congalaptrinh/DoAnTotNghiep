@@ -9,7 +9,8 @@ import type { Page, UserRole } from '../types';
 export const PAGE_ACCESS: Record<Page, UserRole[]> = {
   dashboard: ['admin', 'warehouse_manager', 'warehouse_staff', 'report_viewer'],
   inventory: ['admin', 'warehouse_manager', 'warehouse_staff', 'report_viewer'],
-  categories: ['admin', 'warehouse_manager'],
+  /** report_viewer chỉ ĐỌC (0 nút Thêm/Sửa/Xoá — enforce qua `canWrite()`, không phải tách route riêng); xem 00-OVERVIEW.md mục 6 "...danh sách vật tư/thiết bị (read-only)" — quyết định + lý do đầy đủ trong 07-DECISIONS-LOG.md. */
+  categories: ['admin', 'warehouse_manager', 'report_viewer'],
   warehouses: ['admin', 'warehouse_manager', 'warehouse_staff'],
   suppliers: ['admin', 'warehouse_manager'],
   import: ['admin', 'warehouse_manager', 'warehouse_staff'],
