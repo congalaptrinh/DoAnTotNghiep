@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import type { Page, UserRole } from './types';
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { ToastProvider } from './components/ui';
-import Sidebar from './components/Sidebar';
+import { AuthProvider } from './contexts/AuthContext';
+import { RequireAuth, RequireGuest, PagePermission } from './components/RouteGuards';
+import AppShell from './layouts/AppShell';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
 import InventoryPage from './pages/InventoryPage';
@@ -18,54 +19,45 @@ import HistoryPage from './pages/HistoryPage';
 import UsersPage from './pages/UsersPage';
 import RolesPage from './pages/RolesPage';
 
-function PageRouter({ page, onNavigate }: { page: Page; onNavigate: (p: Page) => void }) {
-  switch (page) {
-    case 'dashboard': return <DashboardPage onNavigate={onNavigate} />;
-    case 'inventory': return <InventoryPage onNavigate={onNavigate} />;
-    case 'categories': return <CategoriesPage />;
-    case 'warehouses': return <WarehousesPage />;
-    case 'suppliers': return <SuppliersPage />;
-    case 'import': return <ImportPage />;
-    case 'export': return <ExportPage />;
-    case 'transfer': return <TransferPage />;
-    case 'recovery': return <RecoveryPage />;
-    case 'stocktake': return <StocktakePage />;
-    case 'disposal': return <DisposalPage />;
-    case 'history': return <HistoryPage />;
-    case 'users': return <UsersPage />;
-    case 'roles': return <RolesPage />;
-    default: return <DashboardPage onNavigate={onNavigate} />;
-  }
-}
-
 export default function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [currentPage, setCurrentPage] = useState<Page>('dashboard');
-  const [userRole, setUserRole] = useState<UserRole>('admin');
-
-  if (!isLoggedIn) {
-    return (
-      <ToastProvider>
-        <LoginPage onLogin={() => setIsLoggedIn(true)} />
-      </ToastProvider>
-    );
-  }
-
   return (
-    <ToastProvider>
-      <div className="flex h-full bg-bg">
-        <Sidebar
-          currentPage={currentPage}
-          onNavigate={(page) => setCurrentPage(page)}
-          userRole={userRole}
-          onRoleChange={setUserRole}
-          onLogout={() => setIsLoggedIn(false)}
-          userName="Cao Xuân Khu"
-        />
-        <main className="flex-1 overflow-auto" style={{ marginLeft: '220px' }}>
-          <PageRouter page={currentPage} onNavigate={setCurrentPage} />
-        </main>
-      </div>
-    </ToastProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <ToastProvider>
+          <Routes>
+            <Route
+              path="/login"
+              element={
+                <RequireGuest>
+                  <LoginPage />
+                </RequireGuest>
+              }
+            />
+
+            <Route element={<RequireAuth />}>
+              <Route element={<AppShell />}>
+                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/dashboard" element={<PagePermission page="dashboard"><DashboardPage /></PagePermission>} />
+                <Route path="/inventory" element={<PagePermission page="inventory"><InventoryPage /></PagePermission>} />
+                <Route path="/categories" element={<PagePermission page="categories"><CategoriesPage /></PagePermission>} />
+                <Route path="/warehouses" element={<PagePermission page="warehouses"><WarehousesPage /></PagePermission>} />
+                <Route path="/suppliers" element={<PagePermission page="suppliers"><SuppliersPage /></PagePermission>} />
+                <Route path="/import" element={<PagePermission page="import"><ImportPage /></PagePermission>} />
+                <Route path="/export" element={<PagePermission page="export"><ExportPage /></PagePermission>} />
+                <Route path="/transfer" element={<PagePermission page="transfer"><TransferPage /></PagePermission>} />
+                <Route path="/recovery" element={<PagePermission page="recovery"><RecoveryPage /></PagePermission>} />
+                <Route path="/stocktake" element={<PagePermission page="stocktake"><StocktakePage /></PagePermission>} />
+                <Route path="/disposal" element={<PagePermission page="disposal"><DisposalPage /></PagePermission>} />
+                <Route path="/history" element={<PagePermission page="history"><HistoryPage /></PagePermission>} />
+                <Route path="/users" element={<PagePermission page="users"><UsersPage /></PagePermission>} />
+                <Route path="/roles" element={<PagePermission page="roles"><RolesPage /></PagePermission>} />
+              </Route>
+            </Route>
+
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </ToastProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }

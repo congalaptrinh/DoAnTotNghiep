@@ -14,13 +14,14 @@ export type Page =
   | 'users'
   | 'roles';
 
-export type UserRole = 'admin' | 'manager' | 'staff' | 'viewer';
+/** Khớp CHÍNH XÁC `role_name` thật của Backend (`backend/prisma/seed.js`, JWT payload `role`) — không dùng alias rút gọn để tránh lệch khi map qua lại. */
+export type UserRole = 'admin' | 'warehouse_manager' | 'warehouse_staff' | 'report_viewer';
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   admin: 'Quản trị viên',
-  manager: 'Quản lý kho',
-  staff: 'Nhân viên kho',
-  viewer: 'Người xem báo cáo',
+  warehouse_manager: 'Quản lý kho',
+  warehouse_staff: 'Nhân viên kho',
+  report_viewer: 'Người xem báo cáo',
 };
 
 export const PAGE_TITLES: Record<Page, string> = {

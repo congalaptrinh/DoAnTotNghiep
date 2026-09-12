@@ -25,11 +25,13 @@
 
 ## Giai đoạn C — App Shell & Auth & Phân quyền
 
-- [ ] C1. Layout App Shell: sidebar trái (gradient) + content area, đúng theo `specs/design/app-shell.png`.
-- [ ] C2. Trang Đăng nhập (1 màn duy nhất) — gọi `POST /api/auth/login`, lưu JWT, redirect vào app.
-- [ ] C3. Context/hook lấy user hiện tại (`GET /api/auth/me`), lưu role vào context toàn app.
-- [ ] C4. Hệ thống phân quyền UI dùng chung — 1 chỗ duy nhất (ví dụ hook `usePermission()` hoặc config map `role → danh sách quyền/menu`), KHÔNG rải rác `if (role === 'admin')` khắp nơi. Áp dụng ẩn/hiện menu sidebar theo đúng 4 biến thể đã thiết kế (Admin / Quản lý kho / Nhân viên kho / Người xem báo cáo).
-- [ ] C5. Route guard: chặn truy cập trực tiếp URL nếu role không đủ quyền (dù ẩn menu, vẫn cần chặn ở route).
+- [x] C1. Layout App Shell: sidebar trái (gradient) + content area, đúng theo `specs/design/app-shell.png`. Note (2026-09-12): giữ nguyên layout đã có (verify hình ảnh ở Giai đoạn B), tách ra `layouts/AppShell.tsx` dùng `<Outlet/>` của React Router.
+- [x] C2. Trang Đăng nhập (1 màn duy nhất) — gọi `POST /api/auth/login`, lưu JWT, redirect vào app. Note (2026-09-12): `LoginPage.tsx` gọi thật qua `useAuth().login()`, lỗi hiển thị đúng message Backend trả. Đã xoá checkbox "Ghi nhớ đăng nhập"/"Quên mật khẩu" (UI giả không có API tương ứng).
+- [x] C3. Context/hook lấy user hiện tại (`GET /api/auth/me`), lưu role vào context toàn app. Note (2026-09-12): `contexts/AuthContext.tsx` — hồi phục phiên qua token khi F5 reload, tự đăng xuất khi token hỏng/hết hạn (401 từ bất kỳ API nào).
+- [x] C4. Hệ thống phân quyền UI dùng chung — 1 chỗ duy nhất (ví dụ hook `usePermission()` hoặc config map `role → danh sách quyền/menu`), KHÔNG rải rác `if (role === 'admin')` khắp nơi. Áp dụng ẩn/hiện menu sidebar theo đúng 4 biến thể đã thiết kế (Admin / Quản lý kho / Nhân viên kho / Người xem báo cáo). Note (2026-09-12): `config/permissions.ts` (`PAGE_ACCESS` map) + `hooks/usePermission.ts`, thay hàm `canSee()` cũ. **Đã xoá hoàn toàn khối "VAI TRÒ DEMO"** (dropdown chọn tay role) khỏi `Sidebar.tsx` — role/tên hiển thị lấy thật từ `AuthContext`.
+- [x] C5. Route guard: chặn truy cập trực tiếp URL nếu role không đủ quyền (dù ẩn menu, vẫn cần chặn ở route). Note (2026-09-12): quyết định chuyển sang React Router (lý do đầy đủ trong `07-DECISIONS-LOG.md`) để có URL thật cho từng trang — `components/RouteGuards.tsx` (`RequireAuth`/`RequireGuest`/`PagePermission`) áp dụng cho đủ 14 route.
+
+**Bằng chứng kiểm thử thật (Playwright, dựng cả Backend+Web thật — xem chi tiết đầy đủ trong `07-DECISIONS-LOG.md`):** đăng nhập 4 vai trò (tạo 3 tài khoản qua API vì seed chỉ có admin) → sidebar đúng từng vai trò; gõ thẳng URL không có quyền (`staff→/users`, `viewer→/import`) → chặn đúng bằng màn "Không có quyền truy cập"; JWT hỏng → tự bounce về `/login`; F5 reload giữ phiên; logout xong gõ lại URL cũ → bị chặn về login. Không có lỗi console ở mọi kịch bản.
 
 ## Giai đoạn D — Dashboard
 

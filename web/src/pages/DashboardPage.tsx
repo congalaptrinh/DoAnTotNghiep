@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom';
 import type { Page } from '../types';
 import { Card } from '../components/PageLayout';
 import { StatCard } from '../components/ui';
@@ -55,11 +56,9 @@ function WeeklyChart() {
   );
 }
 
-interface Props {
-  onNavigate: (page: Page) => void;
-}
-
-export default function DashboardPage({ onNavigate }: Props) {
+export default function DashboardPage() {
+  const navigate = useNavigate();
+  const onNavigate = (page: Page) => navigate(`/${page}`);
   const today = new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
   const stats = [

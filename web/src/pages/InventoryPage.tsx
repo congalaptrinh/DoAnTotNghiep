@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { Page } from '../types';
 import PageLayout, { Card, Badge, Btn, Input, Select, Th, Td } from '../components/PageLayout';
 import { Pagination, EmptyState } from '../components/ui';
@@ -24,11 +25,9 @@ const statusConfig = {
 
 const PAGE_SIZE = 7;
 
-interface Props {
-  onNavigate: (page: Page) => void;
-}
-
-export default function InventoryPage({ onNavigate }: Props) {
+export default function InventoryPage() {
+  const navigate = useNavigate();
+  const onNavigate = (page: Page) => navigate(`/${page}`);
   const [search, setSearch] = useState('');
   const [warehouse, setWarehouse] = useState('all');
   const [status, setStatus] = useState('all');

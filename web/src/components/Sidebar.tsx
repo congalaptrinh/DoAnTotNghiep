@@ -1,16 +1,10 @@
 import type { ReactNode } from 'react';
-import type { Page, UserRole } from '../types';
+import { NavLink, useNavigate } from 'react-router-dom';
+import type { Page } from '../types';
 import { ROLE_LABELS } from '../types';
 import { Avatar } from './ui';
-
-interface Props {
-  currentPage: Page;
-  onNavigate: (page: Page) => void;
-  userRole: UserRole;
-  onRoleChange: (role: UserRole) => void;
-  onLogout: () => void;
-  userName: string;
-}
+import { useAuth } from '../contexts/AuthContext';
+import { usePermission } from '../hooks/usePermission';
 
 function IC({ d, size = 16 }: { d: string; size?: number }) {
   return (
@@ -38,48 +32,41 @@ const ICONS: Record<string, ReactNode> = {
   logout: <IC d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />,
 };
 
-function canSee(page: Page, role: UserRole): boolean {
-  if (role === 'admin') return true;
-  if (role === 'manager') return !['users', 'roles'].includes(page);
-  if (role === 'staff') {
-    return ['dashboard', 'inventory', 'warehouses', 'import', 'export', 'transfer', 'recovery'].includes(page);
-  }
-  if (role === 'viewer') return ['dashboard', 'inventory', 'history'].includes(page);
-  return false;
-}
-
-function NavBtn({
-  id, label, active, onClick, indent,
-}: {
-  id: string; label: string; active: boolean; onClick: () => void; indent?: boolean;
-}) {
+function NavBtn({ id, page, label, indent }: { id: string; page: Page; label: string; indent?: boolean }) {
   return (
-    <button
-      onClick={onClick}
-      className={`w-full flex items-center gap-2.5 rounded-lg text-sm font-medium transition-all text-left ${
-        indent ? 'pl-8 pr-3 py-1.5 text-[13px]' : 'px-3 py-2'
-      } ${
-        active
-          ? 'bg-white/20 text-white shadow-sm'
-          : 'text-white/65 hover:text-white hover:bg-white/10'
-      }`}
+    <NavLink
+      to={`/${page}`}
+      className={({ isActive }) =>
+        `w-full flex items-center gap-2.5 rounded-lg text-sm font-medium transition-all text-left ${
+          indent ? 'pl-8 pr-3 py-1.5 text-[13px]' : 'px-3 py-2'
+        } ${isActive ? 'bg-white/20 text-white shadow-sm' : 'text-white/65 hover:text-white hover:bg-white/10'}`
+      }
     >
-      <span className={`flex-shrink-0 ${active ? 'text-white' : 'text-white/50'}`}>
-        {ICONS[id]}
-      </span>
-      {label}
-    </button>
+      {({ isActive }) => (
+        <>
+          <span className={`flex-shrink-0 ${isActive ? 'text-white' : 'text-white/50'}`}>{ICONS[id]}</span>
+          {label}
+        </>
+      )}
+    </NavLink>
   );
 }
 
-export default function Sidebar({ currentPage, onNavigate, userRole, onRoleChange, onLogout, userName }: Props) {
-  const isActive = (page: Page) => currentPage === page;
-  const isWarehouseActive = currentPage === 'warehouses';
+export default function Sidebar() {
+  const { user, logout } = useAuth();
+  const { canAccess } = usePermission();
+  const navigate = useNavigate();
+
+  if (!user) return null;
+  const role = user.role.role_name;
+
+  function handleLogout() {
+    logout();
+    navigate('/login', { replace: true });
+  }
 
   return (
-    <aside
-      className="fixed left-0 top-0 h-full flex flex-col z-40 overflow-hidden w-[220px] bg-gradient-to-b from-brand-from to-brand-to"
-    >
+    <aside className="fixed left-0 top-0 h-full flex flex-col z-40 overflow-hidden w-[220px] bg-gradient-to-b from-brand-from to-brand-to">
       {/* Logo */}
       <div className="px-5 py-4 flex items-center gap-2.5 border-b border-white/10 flex-shrink-0">
         <div className="w-8 h-8 bg-white/20 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -95,90 +82,43 @@ export default function Sidebar({ currentPage, onNavigate, userRole, onRoleChang
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
-        {canSee('dashboard', userRole) && (
-          <NavBtn id="dashboard" label="Dashboard" active={isActive('dashboard')} onClick={() => onNavigate('dashboard')} />
-        )}
-        {canSee('inventory', userRole) && (
-          <NavBtn id="inventory" label="Tồn kho" active={isActive('inventory')} onClick={() => onNavigate('inventory')} />
-        )}
-        {canSee('categories', userRole) && (
-          <NavBtn id="categories" label="Danh mục vật tư" active={isActive('categories')} onClick={() => onNavigate('categories')} />
-        )}
-        {canSee('warehouses', userRole) && (
-          <NavBtn id="warehouses" label="Kho & vị trí" active={isWarehouseActive} onClick={() => onNavigate('warehouses')} />
-        )}
+        {canAccess('dashboard') && <NavBtn id="dashboard" page="dashboard" label="Dashboard" />}
+        {canAccess('inventory') && <NavBtn id="inventory" page="inventory" label="Tồn kho" />}
+        {canAccess('categories') && <NavBtn id="categories" page="categories" label="Danh mục vật tư" />}
+        {canAccess('warehouses') && <NavBtn id="warehouses" page="warehouses" label="Kho & vị trí" />}
 
         {/* Nghiệp vụ kho */}
-        {(userRole === 'admin' || userRole === 'manager' || userRole === 'staff') && (
+        {(role === 'admin' || role === 'warehouse_manager' || role === 'warehouse_staff') && (
           <>
             <div className="px-3 pt-4 pb-1.5">
               <span className="text-white/35 text-[10px] font-semibold uppercase tracking-widest">Nghiệp vụ kho</span>
             </div>
-            {canSee('import', userRole) && (
-              <NavBtn id="import" label="Nhập kho" active={isActive('import')} onClick={() => onNavigate('import')} indent />
-            )}
-            {canSee('export', userRole) && (
-              <NavBtn id="export" label="Xuất kho" active={isActive('export')} onClick={() => onNavigate('export')} indent />
-            )}
-            {canSee('transfer', userRole) && (
-              <NavBtn id="transfer" label="Chuyển kho" active={isActive('transfer')} onClick={() => onNavigate('transfer')} indent />
-            )}
-            {canSee('recovery', userRole) && (
-              <NavBtn id="recovery" label="Thu hồi" active={isActive('recovery')} onClick={() => onNavigate('recovery')} indent />
-            )}
-            {canSee('stocktake', userRole) && (
-              <NavBtn id="stocktake" label="Kiểm kê" active={isActive('stocktake')} onClick={() => onNavigate('stocktake')} indent />
-            )}
-            {canSee('disposal', userRole) && (
-              <NavBtn id="disposal" label="Thanh lý" active={isActive('disposal')} onClick={() => onNavigate('disposal')} indent />
-            )}
+            {canAccess('import') && <NavBtn id="import" page="import" label="Nhập kho" indent />}
+            {canAccess('export') && <NavBtn id="export" page="export" label="Xuất kho" indent />}
+            {canAccess('transfer') && <NavBtn id="transfer" page="transfer" label="Chuyển kho" indent />}
+            {canAccess('recovery') && <NavBtn id="recovery" page="recovery" label="Thu hồi" indent />}
+            {canAccess('stocktake') && <NavBtn id="stocktake" page="stocktake" label="Kiểm kê" indent />}
+            {canAccess('disposal') && <NavBtn id="disposal" page="disposal" label="Thanh lý" indent />}
           </>
         )}
 
         <div className="pt-3 space-y-0.5">
-          {canSee('suppliers', userRole) && (
-            <NavBtn id="suppliers" label="Nhà cung cấp" active={isActive('suppliers')} onClick={() => onNavigate('suppliers')} />
-          )}
-          {canSee('history', userRole) && (
-            <NavBtn id="history" label="Lịch sử biến động" active={isActive('history')} onClick={() => onNavigate('history')} />
-          )}
-          {canSee('users', userRole) && (
-            <NavBtn id="users" label="Người dùng" active={isActive('users')} onClick={() => onNavigate('users')} />
-          )}
-          {canSee('roles', userRole) && (
-            <NavBtn id="roles" label="Vai trò" active={isActive('roles')} onClick={() => onNavigate('roles')} />
-          )}
+          {canAccess('suppliers') && <NavBtn id="suppliers" page="suppliers" label="Nhà cung cấp" />}
+          {canAccess('history') && <NavBtn id="history" page="history" label="Lịch sử biến động" />}
+          {canAccess('users') && <NavBtn id="users" page="users" label="Người dùng" />}
+          {canAccess('roles') && <NavBtn id="roles" page="roles" label="Vai trò" />}
         </div>
       </nav>
-
-      {/* Role switcher demo */}
-      <div className="px-3 py-3 border-t border-white/10 flex-shrink-0">
-        <div className="text-white/35 text-[10px] uppercase tracking-widest mb-1.5 px-1">Vai trò demo</div>
-        <select
-          value={userRole}
-          onChange={(e) => onRoleChange(e.target.value as UserRole)}
-          className="w-full bg-white/10 text-white text-xs py-1.5 px-2 rounded-lg border border-white/20 focus:outline-none cursor-pointer"
-        >
-          <option value="admin" className="text-gray-900 bg-white">Quản trị viên (Admin)</option>
-          <option value="manager" className="text-gray-900 bg-white">Quản lý kho</option>
-          <option value="staff" className="text-gray-900 bg-white">Nhân viên kho</option>
-          <option value="viewer" className="text-gray-900 bg-white">Người xem báo cáo</option>
-        </select>
-      </div>
 
       {/* User */}
       <div className="px-4 py-3 border-t border-white/10 flex-shrink-0">
         <div className="flex items-center gap-2.5">
-          <Avatar name={userName} color="brand" size="sm" />
+          <Avatar name={user.full_name} color="brand" size="sm" />
           <div className="flex-1 min-w-0">
-            <div className="text-white text-sm font-semibold truncate">{userName}</div>
-            <div className="text-white/45 text-[11px] truncate">{ROLE_LABELS[userRole]}</div>
+            <div className="text-white text-sm font-semibold truncate">{user.full_name}</div>
+            <div className="text-white/45 text-[11px] truncate">{ROLE_LABELS[role]}</div>
           </div>
-          <button
-            onClick={onLogout}
-            title="Đăng xuất"
-            className="text-white/45 hover:text-white transition-colors flex-shrink-0"
-          >
+          <button onClick={handleLogout} title="Đăng xuất" className="text-white/45 hover:text-white transition-colors flex-shrink-0">
             {ICONS.logout}
           </button>
         </div>
