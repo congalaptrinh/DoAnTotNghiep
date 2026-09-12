@@ -77,9 +77,16 @@
 
 ## Giai đoạn G — Lịch sử & Quản trị
 
-- [ ] G1. Lịch sử biến động kho — bảng log + bộ lọc đầy đủ (item/kho/loại nghiệp vụ/khoảng ngày), icon+màu theo loại nghiệp vụ.
-- [ ] G2. Quản lý người dùng (chỉ Admin) — bảng + form thêm/sửa + gán vai trò.
-- [ ] G3. Quản lý vai trò (chỉ Admin) — danh sách.
+- [x] G1. Lịch sử biến động kho — bảng log + bộ lọc đầy đủ (item/kho/loại nghiệp vụ/khoảng ngày), icon+màu theo loại nghiệp vụ. Note (2026-09-13): `HistoryPage.tsx` nối `GET /stock-movements` thật, giữ đúng thứ tự `asc` (cũ→mới) Backend trả về — KHÔNG đảo mảng như các trang danh sách phiếu khác (quyết định riêng, xem `07-DECISIONS-LOG.md`). Bộ lọc thật: vật tư (Select từ `listItems`), kho (Select), khoảng ngày (from/to), loại nghiệp vụ (7 nút pill). Icon+màu RIÊNG cho đủ 7 `movement_type` (IMPORT xanh lá, EXPORT đỏ, TRANSFER_OUT indigo, TRANSFER_IN xanh dương, RECOVERY tím, ADJUSTMENT_STOCKTAKE vàng, LIQUIDATION xám — trùng khớp 7 màu Badge có sẵn). Tái dùng `signedQuantity()`/`MOVEMENT_LABELS` đã có từ Giai đoạn D (export thêm `MOVEMENT_LABELS` khỏi `useDashboardStats.ts` để dùng chung, tránh trùng lặp định nghĩa nhãn). Bỏ nút "Xuất Excel"/"Xem phiếu gốc" của mock cũ vì không có hành động thật đứng sau.
+- [x] G2. Quản lý người dùng (chỉ Admin) — bảng + form thêm/sửa + gán vai trò. Note (2026-09-13): `user.service.ts` + `UsersPage.tsx` — CRUD thật đầy đủ (`POST`/`PUT`/`DELETE /users`), vai trò lấy real-time từ `GET /roles` (không hard-code danh sách role). "Khoá tài khoản" = soft-delete thật (status→INACTIVE, có `ConfirmDialog`); "Kích hoạt lại" = `PUT` đổi status về ACTIVE (không có endpoint riêng, tái dùng update).
+- [x] G3. Quản lý vai trò (chỉ Admin) — danh sách. Note (2026-09-13): `role.service.ts` + `RolesPage.tsx` — CHỈ danh sách đúng phạm vi checklist (Backend có CRUD đầy đủ nhưng chưa cần dùng). Khác mock cũ (mô tả quyền hạn viết tay, dễ lệch thực tế): đọc TRỰC TIẾP từ `PAGE_ACCESS`/`RESOURCE_WRITE_ACCESS` thật trong `config/permissions.ts` để liệt kê đúng những trang mỗi vai trò truy cập được + có quyền ghi hay chỉ đọc, và đếm số người dùng thật theo từng vai trò từ `GET /users` — đảm bảo trang này luôn khớp 100% với quyền thực thi thật, không thể lệch pha do sửa code 1 nơi quên nơi kia.
+
+**Bằng chứng kiểm thử G1-G3 (mức nhẹ tay cho G1/G3 theo đúng quy tắc rủi ro thấp, riêng RBAC G2/G3 test KỸ vì là quyền nhạy cảm nhất hệ thống):**
+- G1: smoke test — 8 bản ghi trang đầu, lọc "Nhập kho" ra đúng 7 dòng, click 1 dòng mở đúng panel chi tiết.
+- G3: smoke test — hiện đúng 4 thẻ vai trò (dữ liệu thật từ `GET /roles`).
+- G2: CRUD thật đầy đủ (không chỉ smoke) — tạo tài khoản mới → sửa tên → khoá tài khoản → kích hoạt lại, cả 4 bước đều thành công thật qua toast + gọi API thật.
+- **RBAC G2+G3 (test kỹ theo yêu cầu riêng)**: cả 3 vai trò `manager.test`/`staff.test`/`viewer.test` đều bị chặn đúng ở CẢ route guard (`/users`, `/roles` → "Không có quyền truy cập") LẪN sidebar (ẩn cả 2 mục) — chỉ admin thấy và thao tác được, đúng thiết kế "nhạy cảm nhất hệ thống".
+- Không có `pageerror` ở bất kỳ kịch bản nào. Chi tiết đầy đủ: `07-DECISIONS-LOG.md`.
 
 ## Giai đoạn H — Kiểm thử & hoàn thiện
 

@@ -36,7 +36,7 @@ export function signedQuantity(row: StockMovementRow): number {
   return negative.includes(row.movement_type) ? -row.quantity : row.quantity;
 }
 
-const MOVEMENT_LABELS: Record<StockMovementRow['movement_type'], string> = {
+export const MOVEMENT_LABELS: Record<StockMovementRow['movement_type'], string> = {
   IMPORT: 'Nhập kho',
   EXPORT: 'Xuất kho',
   TRANSFER_IN: 'Chuyển kho (nhận)',
