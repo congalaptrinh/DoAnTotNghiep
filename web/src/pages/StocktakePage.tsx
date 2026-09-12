@@ -1,47 +1,131 @@
-import { useState } from 'react';
-import PageLayout, { Card, Badge, Btn, Th, Td } from '../components/PageLayout';
+import { useEffect, useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import PageLayout, { Card, Badge, Btn, Select, Th, Td } from '../components/PageLayout';
+import { Modal, EmptyState, useToast } from '../components/ui';
+import { usePermission } from '../hooks/usePermission';
+import { ApiError } from '../services/apiClient';
+import { listWarehouses } from '../services/warehouse.service';
+import {
+  listStocktakeSessions, createStocktakeSession, updateStocktakeItems, confirmStocktakeSession,
+} from '../services/stocktakeSession.service';
+import type { OrderStatus } from '../services/orders.service';
 
-const sessions = [
-  { id: 'KK-2025-0025', date: '05/09/2025', warehouse: 'Kho A', creator: 'Phạm Thanh Tú', items: 42, matched: 40, diff: 2, status: 'active' },
-  { id: 'KK-2025-0024', date: '01/09/2025', warehouse: 'Kho B', creator: 'Trần Thị Bình', items: 35, matched: 35, diff: 0, status: 'done' },
-  { id: 'KK-2025-0023', date: '25/08/2025', warehouse: 'Kho A', creator: 'Nguyễn Văn An', items: 50, matched: 47, diff: 3, status: 'done' },
-];
-
-const stocktakeItems = [
-  { id: 'SP-0001', name: 'IC555 Timer', location: 'A1-01-K3', system: 250, actual: 252, unit: 'Cái' },
-  { id: 'SP-0002', name: 'Tụ 100μF 16V', location: 'A2-03-K1', system: 45, actual: 43, unit: 'Cái' },
-  { id: 'SP-0003', name: 'Arduino Uno R3', location: 'A4-01-K2', system: 12, actual: 12, unit: 'Bộ' },
-  { id: 'SP-0004', name: 'Relay 5V 10A', location: 'A3-01-K4', system: 3, actual: 5, unit: 'Cái' },
-  { id: 'SP-0006', name: 'Điện trở 10kΩ', location: 'A1-02-K1', system: 1200, actual: 1185, unit: 'Cái' },
-  { id: 'SP-0008', name: 'Cảm biến DHT22', location: 'A4-02-K3', system: 28, actual: 28, unit: 'Cái' },
-];
-
-const statusConfig = {
-  active: { label: 'Đang tiến hành', color: 'indigo' as const },
-  done: { label: 'Hoàn tất', color: 'green' as const },
+const statusConfig: Record<OrderStatus, { label: string; color: 'gray' | 'green' | 'red' | 'indigo' }> = {
+  DRAFT: { label: 'Đang tiến hành', color: 'indigo' },
+  CONFIRMED: { label: 'Hoàn tất', color: 'green' },
+  CANCELLED: { label: 'Đã huỷ', color: 'red' },
 };
 
-export default function StocktakePage() {
-  const [view, setView] = useState<'list' | 'count'>('list');
-  const [actuals, setActuals] = useState<number[]>(stocktakeItems.map((i) => i.actual));
+function errMsg(err: unknown, fallback: string): string {
+  return err instanceof ApiError ? err.message : fallback;
+}
 
-  if (view === 'count') {
+export default function StocktakePage() {
+  const { canWrite } = usePermission();
+  const canWriteStocktake = canWrite('stocktake_sessions');
+  const qc = useQueryClient();
+  const { show } = useToast();
+
+  const [activeId, setActiveId] = useState<string | null>(null);
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [newWarehouseId, setNewWarehouseId] = useState('');
+
+  const sessionsQuery = useQuery({ queryKey: ['stocktake-sessions'], queryFn: () => listStocktakeSessions() });
+  const warehousesQuery = useQuery({ queryKey: ['warehouses'], queryFn: listWarehouses });
+  const sessions = sessionsQuery.data ?? [];
+  const warehouses = (warehousesQuery.data ?? []).filter((w) => w.status === 'ACTIVE');
+
+  const createMut = useMutation({
+    mutationFn: createStocktakeSession,
+    onSuccess: (session) => {
+      qc.invalidateQueries({ queryKey: ['stocktake-sessions'] });
+      setCreateModalOpen(false);
+      setNewWarehouseId('');
+      setActiveId(session.stocktake_id);
+      show('success', `Đã mở phiên kiểm kê ${session.stocktake_code} — snapshot ${session.items.length} dòng tồn kho`);
+    },
+    onError: (err) => show('error', errMsg(err, 'Tạo phiên kiểm kê thất bại')),
+  });
+
+  /* ───────────── Màn đếm / nhập số liệu ───────────── */
+
+  const active = sessions.find((s) => s.stocktake_id === activeId) ?? null;
+  const [localQty, setLocalQty] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    if (active) {
+      const seed: Record<string, string> = {};
+      active.items.forEach((it) => { seed[it.stocktake_item_id] = it.actual_quantity != null ? String(it.actual_quantity) : ''; });
+      setLocalQty(seed);
+    }
+  }, [active?.stocktake_id]);
+
+  const saveMut = useMutation({
+    mutationFn: (items: { stocktake_item_id: string; actual_quantity: number }[]) => updateStocktakeItems(active!.stocktake_id, items),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['stocktake-sessions'] }); show('success', 'Đã lưu số lượng thực tế'); },
+    onError: (err) => show('error', errMsg(err, 'Lưu số liệu thất bại')),
+  });
+
+  const confirmMut = useMutation({
+    mutationFn: () => confirmStocktakeSession(active!.stocktake_id),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['stocktake-sessions'] }); qc.invalidateQueries({ queryKey: ['inventory'] }); show('success', 'Đã xác nhận kiểm kê — tồn kho đã được đặt lại theo số thực tế'); },
+    onError: (err) => show('error', errMsg(err, 'Xác nhận kiểm kê thất bại')),
+  });
+
+  function saveProgress() {
+    if (!active) return;
+    const items = active.items
+      .filter((it) => localQty[it.stocktake_item_id] !== '' && localQty[it.stocktake_item_id] !== undefined)
+      .map((it) => ({ stocktake_item_id: it.stocktake_item_id, actual_quantity: parseInt(localQty[it.stocktake_item_id]) || 0 }));
+    if (items.length === 0) return;
+    saveMut.mutate(items);
+  }
+
+  const unfilledCount = active ? active.items.filter((it) => it.actual_quantity === null).length : 0;
+  const canConfirm = !!active && active.status === 'DRAFT' && unfilledCount === 0 && canWriteStocktake;
+
+  if (active) {
+    const isDraft = active.status === 'DRAFT';
+    const dư = active.items.reduce((s, it) => s + Math.max(0, it.difference ?? 0), 0);
+    const thiếu = active.items.reduce((s, it) => s + Math.max(0, -(it.difference ?? 0)), 0);
+    const khớp = active.items.filter((it) => it.difference === 0).length;
+
     return (
       <PageLayout
-        title="Kiểm kê #KK-2025-0025 — Kho A"
+        title={`Kiểm kê ${active.stocktake_code} — ${active.warehouse.warehouse_name}`}
         subtitle="Đối chiếu số liệu hệ thống và thực tế"
-        actions={<Btn variant="secondary" onClick={() => setView('list')}>← Quay lại</Btn>}
+        actions={<Btn variant="secondary" onClick={() => setActiveId(null)}>← Quay lại</Btn>}
       >
+        <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2.5">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5">
+            <path d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+          </svg>
+          <p className="text-sm text-amber-800">
+            <b>Xác nhận sẽ ĐẶT LẠI (SET) tồn kho đúng bằng "Thực tế" đã nhập ở đây cho từng vị trí — không phải cộng/trừ chênh lệch.</b>{' '}
+            Cột "Hệ thống" là số liệu chụp nhanh (snapshot) tại đúng thời điểm MỞ phiên này ({new Date(active.stocktake_date).toLocaleString('vi-VN')}), không tự cập nhật theo thời gian thực.
+            Nếu có nghiệp vụ khác (nhập/xuất/chuyển kho...) xảy ra ở kho này SAU khi mở phiên và TRƯỚC khi xác nhận, thay đổi đó sẽ bị GHI ĐÈ bởi số "Thực tế" khi bấm "Xác nhận kiểm kê".
+          </p>
+        </div>
+
         <Card>
           <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Badge color="indigo">Đang tiến hành</Badge>
-              <span className="text-sm text-gray-500">Người kiểm: Phạm Thanh Tú • 05/09/2025</span>
+              <Badge color={statusConfig[active.status].color}>{statusConfig[active.status].label}</Badge>
+              <span className="text-sm text-gray-500">Người kiểm: {active.creator.full_name} • {new Date(active.stocktake_date).toLocaleDateString('vi-VN')}</span>
             </div>
-            <div className="flex gap-2">
-              <Btn variant="secondary" size="sm">Lưu tiến độ</Btn>
-              <Btn size="sm">Hoàn tất kiểm kê</Btn>
-            </div>
+            {isDraft && canWriteStocktake && (
+              <div className="flex gap-2 items-center">
+                {unfilledCount > 0 && <span className="text-xs text-danger font-medium">Còn {unfilledCount} dòng chưa nhập</span>}
+                <Btn variant="secondary" size="sm" onClick={saveProgress} disabled={saveMut.isPending}>
+                  {saveMut.isPending ? 'Đang lưu...' : 'Lưu tiến độ'}
+                </Btn>
+                <span title={unfilledCount > 0 ? 'Còn dòng chưa nhập số lượng thực tế — không thể xác nhận' : undefined}>
+                  <Btn size="sm" onClick={() => confirmMut.mutate()} disabled={!canConfirm || confirmMut.isPending}>
+                    {confirmMut.isPending ? 'Đang xử lý...' : 'Xác nhận kiểm kê (SET tồn kho)'}
+                  </Btn>
+                </span>
+              </div>
+            )}
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -50,40 +134,36 @@ export default function StocktakePage() {
                   <Th>Mã SP</Th>
                   <Th>Tên vật tư</Th>
                   <Th>Vị trí</Th>
-                  <Th className="text-right">Hệ thống</Th>
+                  <Th className="text-right">Hệ thống (snapshot)</Th>
                   <Th className="text-right">Thực tế</Th>
                   <Th className="text-right">Chênh lệch</Th>
-                  <Th>Ghi chú</Th>
                 </tr>
               </thead>
               <tbody>
-                {stocktakeItems.map((item, i) => {
-                  const diff = actuals[i] - item.system;
+                {active.items.map((it) => {
+                  const diff = it.difference;
                   return (
-                    <tr key={item.id} className="hover:bg-gray-50/60 transition-colors">
-                      <Td><span className="font-mono text-xs text-gray-500">{item.id}</span></Td>
-                      <Td><span className="font-medium text-gray-900">{item.name}</span></Td>
-                      <Td><code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">{item.location}</code></Td>
-                      <Td className="text-right text-gray-700">{item.system}</Td>
+                    <tr key={it.stocktake_item_id} className="hover:bg-gray-50/60 transition-colors">
+                      <Td><span className="font-mono text-xs text-gray-500">{it.item.item_code}</span></Td>
+                      <Td><span className="font-medium text-gray-900">{it.item.item_name}</span></Td>
+                      <Td><code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs">{it.location.location_code}</code></Td>
+                      <Td className="text-right text-gray-700">{it.system_quantity}</Td>
                       <Td className="text-right">
                         <input
                           type="number"
-                          value={actuals[i]}
-                          onChange={(e) => {
-                            const n = [...actuals];
-                            n[i] = parseInt(e.target.value) || 0;
-                            setActuals(n);
-                          }}
-                          className="w-20 px-2 py-1 text-sm text-right border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                          value={localQty[it.stocktake_item_id] ?? ''}
+                          disabled={!isDraft || !canWriteStocktake}
+                          onChange={(e) => setLocalQty({ ...localQty, [it.stocktake_item_id]: e.target.value })}
+                          placeholder="Chưa nhập"
+                          className={`w-24 px-2 py-1 text-sm text-right border rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-400 disabled:bg-gray-50 disabled:text-gray-400 ${
+                            it.actual_quantity === null ? 'border-red-300 bg-red-50' : 'border-gray-200'
+                          }`}
                         />
                       </Td>
                       <Td className="text-right">
-                        <span className={`font-bold text-sm ${diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-gray-400'}`}>
-                          {diff > 0 ? `+${diff}` : diff}
+                        <span className={`font-bold text-sm ${diff == null ? 'text-gray-300' : diff > 0 ? 'text-green-600' : diff < 0 ? 'text-red-600' : 'text-gray-400'}`}>
+                          {diff == null ? '—' : diff > 0 ? `+${diff}` : diff}
                         </span>
-                      </Td>
-                      <Td>
-                        <input type="text" placeholder="Ghi chú..." className="w-32 px-2 py-1 text-xs border border-gray-200 rounded-lg focus:outline-none" />
                       </Td>
                     </tr>
                   );
@@ -93,10 +173,10 @@ export default function StocktakePage() {
           </div>
           <div className="px-5 py-3 bg-gray-50/50 border-t border-gray-100">
             <div className="flex gap-6 text-sm">
-              <span className="text-gray-500">Tổng mặt hàng: <b className="text-gray-900">{stocktakeItems.length}</b></span>
-              <span className="text-green-600">Dư: <b>{actuals.reduce((s, a, i) => s + Math.max(0, a - stocktakeItems[i].system), 0)}</b></span>
-              <span className="text-red-600">Thiếu: <b>{actuals.reduce((s, a, i) => s + Math.max(0, stocktakeItems[i].system - a), 0)}</b></span>
-              <span className="text-gray-500">Khớp: <b className="text-gray-900">{actuals.filter((a, i) => a === stocktakeItems[i].system).length}</b></span>
+              <span className="text-gray-500">Tổng mặt hàng: <b className="text-gray-900">{active.items.length}</b></span>
+              <span className="text-green-600">Dư: <b>{dư}</b></span>
+              <span className="text-red-600">Thiếu: <b>{thiếu}</b></span>
+              <span className="text-gray-500">Khớp: <b className="text-gray-900">{khớp}</b></span>
             </div>
           </div>
         </Card>
@@ -109,60 +189,94 @@ export default function StocktakePage() {
       title="Kiểm kê"
       subtitle="Quản lý các phiên kiểm kê và đối chiếu tồn kho"
       actions={
-        <Btn>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 5v14M5 12l7-7 7 7" />
-          </svg>
-          Tạo phiên kiểm kê
-        </Btn>
+        canWriteStocktake ? (
+          <Btn onClick={() => setCreateModalOpen(true)}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14M5 12l7-7 7 7" />
+            </svg>
+            Tạo phiên kiểm kê
+          </Btn>
+        ) : undefined
       }
     >
       <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr>
-                <Th>Mã phiên</Th>
-                <Th>Ngày kiểm</Th>
-                <Th>Kho</Th>
-                <Th>Người kiểm</Th>
-                <Th className="text-right">Mặt hàng</Th>
-                <Th className="text-right">Khớp</Th>
-                <Th className="text-right">Chênh lệch</Th>
-                <Th>Trạng thái</Th>
-                <Th></Th>
-              </tr>
-            </thead>
-            <tbody>
-              {sessions.map((s) => (
-                <tr key={s.id} className="hover:bg-gray-50/60 transition-colors">
-                  <Td><span className="font-mono text-sm font-semibold text-yellow-600">{s.id}</span></Td>
-                  <Td><span className="text-sm text-gray-500">{s.date}</span></Td>
-                  <Td><span className="font-medium text-gray-700">{s.warehouse}</span></Td>
-                  <Td>{s.creator}</Td>
-                  <Td className="text-right">{s.items}</Td>
-                  <Td className="text-right text-green-600 font-semibold">{s.matched}</Td>
-                  <Td className="text-right">
-                    <span className={`font-semibold ${s.diff > 0 ? 'text-red-600' : 'text-gray-400'}`}>
-                      {s.diff > 0 ? `+${s.diff}` : '0'}
-                    </span>
-                  </Td>
-                  <Td>
-                    <Badge color={statusConfig[s.status as keyof typeof statusConfig].color}>
-                      {statusConfig[s.status as keyof typeof statusConfig].label}
-                    </Badge>
-                  </Td>
-                  <Td>
-                    <Btn variant="ghost" size="sm" onClick={() => setView('count')}>
-                      {s.status === 'active' ? 'Tiếp tục' : 'Xem'}
-                    </Btn>
-                  </Td>
+        {sessionsQuery.isLoading ? (
+          <div className="py-16 text-center text-sm text-gray-400">Đang tải dữ liệu...</div>
+        ) : sessionsQuery.error ? (
+          <EmptyState title="Không tải được dữ liệu" description={errMsg(sessionsQuery.error, 'Lỗi không xác định')} />
+        ) : sessions.length === 0 ? (
+          <EmptyState title="Chưa có phiên kiểm kê nào" action={canWriteStocktake ? { label: 'Tạo phiên đầu tiên', onClick: () => setCreateModalOpen(true) } : undefined} />
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr>
+                  <Th>Mã phiên</Th>
+                  <Th>Ngày kiểm</Th>
+                  <Th>Kho</Th>
+                  <Th>Người kiểm</Th>
+                  <Th className="text-right">Mặt hàng</Th>
+                  <Th className="text-right">Khớp</Th>
+                  <Th className="text-right">Chênh lệch</Th>
+                  <Th>Trạng thái</Th>
+                  <Th></Th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {sessions.map((s) => {
+                  const totalDiff = s.items.reduce((sum, it) => sum + Math.abs(it.difference ?? 0), 0);
+                  const matched = s.items.filter((it) => it.difference === 0).length;
+                  return (
+                    <tr key={s.stocktake_id} className="hover:bg-gray-50/60 transition-colors cursor-pointer" onClick={() => setActiveId(s.stocktake_id)}>
+                      <Td><span className="font-mono text-sm font-semibold text-yellow-600">{s.stocktake_code}</span></Td>
+                      <Td><span className="text-sm text-gray-500">{new Date(s.stocktake_date).toLocaleDateString('vi-VN')}</span></Td>
+                      <Td><span className="font-medium text-gray-700">{s.warehouse.warehouse_name}</span></Td>
+                      <Td>{s.creator.full_name}</Td>
+                      <Td className="text-right">{s.items.length}</Td>
+                      <Td className="text-right text-green-600 font-semibold">{matched}</Td>
+                      <Td className="text-right">
+                        <span className={`font-semibold ${totalDiff > 0 ? 'text-red-600' : 'text-gray-400'}`}>{totalDiff > 0 ? totalDiff : '0'}</span>
+                      </Td>
+                      <Td><Badge color={statusConfig[s.status].color}>{statusConfig[s.status].label}</Badge></Td>
+                      <Td>
+                        <Btn variant="ghost" size="sm" onClick={(e) => { e?.stopPropagation(); setActiveId(s.stocktake_id); }}>
+                          {s.status === 'DRAFT' ? 'Tiếp tục' : 'Xem'}
+                        </Btn>
+                      </Td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </Card>
+
+      <Modal
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        title="Tạo phiên kiểm kê mới"
+        footer={
+          <>
+            <Btn onClick={() => newWarehouseId && createMut.mutate({ warehouse_id: newWarehouseId })} disabled={!newWarehouseId || createMut.isPending}>
+              {createMut.isPending ? 'Đang tạo...' : 'Mở phiên kiểm kê'}
+            </Btn>
+            <Btn variant="secondary" onClick={() => setCreateModalOpen(false)}>Huỷ</Btn>
+          </>
+        }
+      >
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1.5">Kho cần kiểm kê *</label>
+          <Select
+            value={newWarehouseId}
+            onChange={setNewWarehouseId}
+            options={[{ value: '', label: 'Chọn kho...' }, ...warehouses.map((w) => ({ value: w.warehouse_id, label: w.warehouse_name }))]}
+          />
+          <p className="text-xs text-gray-400 mt-2">
+            Hệ thống sẽ chụp nhanh (snapshot) toàn bộ tồn kho hiện tại của kho này làm số liệu "Hệ thống" cho phiên kiểm kê.
+          </p>
+        </div>
+      </Modal>
     </PageLayout>
   );
 }
