@@ -1,0 +1,28 @@
+/*
+ * Design tokens — nguồn DUY NHẤT cho màu sắc dùng trong toàn bộ Web App.
+ * Giá trị khớp chính xác với web/src/imports/pasted_text/app-design-spec.md
+ * (bản thiết kế gốc) và được chốt lại trong specs/07-DECISIONS-LOG.md (Giai đoạn A2).
+ *
+ * Tailwind CSS v4 tự sinh utility class từ mỗi biến `--color-*` khai báo trong
+ * @theme, ví dụ `--color-brand-from` => `bg-brand-from`, `text-brand-from`,
+ * `border-brand-from`, `from-brand-from`... Không khai báo màu mới ở nơi khác
+ * (không hex cứng, không dùng thẳng bảng màu mặc định của Tailwind như
+ * `indigo-500`/`violet-600`) — mọi trang phải dùng token ở đây.
+ */
+@theme {
+  /* Gradient thương hiệu: sidebar, nút hành động chính, hero banner, panel đăng nhập */
+  --color-brand-from: #4F46E5;
+  --color-brand-to: #7C3AED;
+
+  /* Màu ngữ nghĩa */
+  --color-danger: #DC2626;
+  --color-warning: #F59E0B;
+  --color-success: #16A34A;
+  --color-info: #2563EB;
+  --color-accent: #9333EA;
+
+  /* Nền & viền */
+  --color-bg: #F8F9FB;
+  --color-surface: #FFFFFF;
+  --color-border: #E5E7EB;
+}
