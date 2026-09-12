@@ -20,11 +20,13 @@ function errMsg(err: unknown, fallback: string): string {
 export default function WarehousesPage() {
   const [tab, setTab] = useState<'warehouses' | 'locations'>('warehouses');
   const [whFilter, setWhFilter] = useState('all');
+  const [whStatusFilter, setWhStatusFilter] = useState('all');
+  const [locStatusFilter, setLocStatusFilter] = useState('all');
   const [warehouseModal, setWarehouseModal] = useState<WarehouseModal | null>(null);
   const [locationModal, setLocationModal] = useState<LocationModal | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
-  const [warehouseForm, setWarehouseForm] = useState({ warehouse_name: '', address: '', description: '' });
-  const [locationForm, setLocationForm] = useState({ warehouse_id: '', location_code: '', area: '', shelf: '', drawer: '', box: '' });
+  const [warehouseForm, setWarehouseForm] = useState({ warehouse_name: '', address: '', description: '', status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE' });
+  const [locationForm, setLocationForm] = useState({ warehouse_id: '', location_code: '', area: '', shelf: '', drawer: '', box: '', status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE' });
 
   const { canWrite } = usePermission();
   /** Kho và Vị trí lưu trữ có quyền ghi KHÁC NHAU (staff được sửa vị trí nhưng không được sửa kho) — xem `config/permissions.ts`. */
@@ -40,7 +42,10 @@ export default function WarehousesPage() {
   const locations = locationsQuery.data ?? [];
   const warehouseName = (id: string) => warehouses.find((w) => w.warehouse_id === id)?.warehouse_name ?? '—';
   const locationCountOf = (warehouseId: string) => locations.filter((l) => l.warehouse_id === warehouseId).length;
-  const filteredLocs = locations.filter((l) => whFilter === 'all' || l.warehouse_id === whFilter);
+  const filteredWarehouses = warehouses.filter((w) => whStatusFilter === 'all' || w.status === whStatusFilter);
+  const filteredLocs = locations.filter((l) =>
+    (whFilter === 'all' || l.warehouse_id === whFilter) && (locStatusFilter === 'all' || l.status === locStatusFilter)
+  );
 
   /* ───────────── Warehouse mutations ───────────── */
 
@@ -58,6 +63,11 @@ export default function WarehousesPage() {
     mutationFn: deleteWarehouse,
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['warehouses'] }); show('success', 'Đã ngừng sử dụng kho'); setDeleteTarget(null); },
     onError: (err) => { show('error', errMsg(err, 'Ngừng sử dụng kho thất bại')); setDeleteTarget(null); },
+  });
+  const reactivateWhMut = useMutation({
+    mutationFn: (id: string) => updateWarehouse(id, { status: 'ACTIVE' }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['warehouses'] }); show('success', 'Đã kích hoạt lại kho'); },
+    onError: (err) => show('error', errMsg(err, 'Kích hoạt lại kho thất bại')),
   });
 
   /* ───────────── Location mutations ───────────── */
@@ -77,32 +87,40 @@ export default function WarehousesPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['storage-locations'] }); show('success', 'Đã ngừng sử dụng vị trí'); setDeleteTarget(null); },
     onError: (err) => { show('error', errMsg(err, 'Ngừng sử dụng vị trí thất bại')); setDeleteTarget(null); },
   });
+  const reactivateLocMut = useMutation({
+    mutationFn: (id: string) => updateStorageLocation(id, { status: 'ACTIVE' }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['storage-locations'] }); show('success', 'Đã kích hoạt lại vị trí'); },
+    onError: (err) => show('error', errMsg(err, 'Kích hoạt lại vị trí thất bại')),
+  });
 
   /* ───────────── Modal openers ───────────── */
 
   function openAddWarehouse() {
-    setWarehouseForm({ warehouse_name: '', address: '', description: '' });
+    setWarehouseForm({ warehouse_name: '', address: '', description: '', status: 'ACTIVE' });
     setWarehouseModal({ mode: 'add' });
   }
   function openEditWarehouse(w: Warehouse) {
-    setWarehouseForm({ warehouse_name: w.warehouse_name, address: w.address ?? '', description: w.description ?? '' });
+    setWarehouseForm({ warehouse_name: w.warehouse_name, address: w.address ?? '', description: w.description ?? '', status: w.status });
     setWarehouseModal({ mode: 'edit', warehouse: w });
   }
   function saveWarehouseModal() {
     if (!warehouseForm.warehouse_name.trim()) return;
-    const data = { warehouse_name: warehouseForm.warehouse_name.trim(), address: warehouseForm.address || undefined, description: warehouseForm.description || undefined };
+    const data = {
+      warehouse_name: warehouseForm.warehouse_name.trim(), address: warehouseForm.address || undefined,
+      description: warehouseForm.description || undefined, status: warehouseForm.status,
+    };
     if (warehouseModal?.mode === 'add') createWhMut.mutate(data);
     else if (warehouseModal?.mode === 'edit') updateWhMut.mutate({ id: warehouseModal.warehouse.warehouse_id, data });
   }
 
   function openAddLocation() {
-    setLocationForm({ warehouse_id: warehouses[0]?.warehouse_id ?? '', location_code: '', area: '', shelf: '', drawer: '', box: '' });
+    setLocationForm({ warehouse_id: warehouses[0]?.warehouse_id ?? '', location_code: '', area: '', shelf: '', drawer: '', box: '', status: 'ACTIVE' });
     setLocationModal({ mode: 'add' });
   }
   function openEditLocation(loc: StorageLocation) {
     setLocationForm({
       warehouse_id: loc.warehouse_id, location_code: loc.location_code,
-      area: loc.area ?? '', shelf: loc.shelf ?? '', drawer: loc.drawer ?? '', box: loc.box ?? '',
+      area: loc.area ?? '', shelf: loc.shelf ?? '', drawer: loc.drawer ?? '', box: loc.box ?? '', status: loc.status,
     });
     setLocationModal({ mode: 'edit', location: loc });
   }
@@ -115,6 +133,7 @@ export default function WarehousesPage() {
       shelf: locationForm.shelf || undefined,
       drawer: locationForm.drawer || undefined,
       box: locationForm.box || undefined,
+      status: locationForm.status,
     };
     if (locationModal?.mode === 'add') createLocMut.mutate(data);
     else if (locationModal?.mode === 'edit') updateLocMut.mutate({ id: locationModal.location.location_id, data });
@@ -159,11 +178,28 @@ export default function WarehousesPage() {
       ) : loadError ? (
         <EmptyState title="Không tải được dữ liệu" description={errMsg(loadError, 'Lỗi không xác định')} />
       ) : tab === 'warehouses' ? (
-        warehouses.length === 0 ? (
-          <EmptyState title="Chưa có kho nào" action={canWriteCurrentTab ? { label: 'Thêm kho đầu tiên', onClick: openAddWarehouse } : undefined} />
-        ) : (
+        <>
+          <div className="flex items-center gap-3 mb-4">
+            <Select
+              value={whStatusFilter}
+              onChange={setWhStatusFilter}
+              options={[
+                { value: 'all', label: 'Tất cả trạng thái' },
+                { value: 'ACTIVE', label: 'Đang hoạt động' },
+                { value: 'INACTIVE', label: 'Ngừng hoạt động' },
+              ]}
+              className="w-48"
+            />
+            <span className="text-sm text-gray-400 ml-auto">{filteredWarehouses.length} kho</span>
+          </div>
+          {filteredWarehouses.length === 0 ? (
+            <EmptyState
+              title={warehouses.length === 0 ? 'Chưa có kho nào' : 'Không có kho nào khớp bộ lọc'}
+              action={warehouses.length === 0 && canWriteCurrentTab ? { label: 'Thêm kho đầu tiên', onClick: openAddWarehouse } : undefined}
+            />
+          ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {warehouses.map((wh) => {
+            {filteredWarehouses.map((wh) => {
               const locCount = locationCountOf(wh.warehouse_id);
               return (
                 <Card key={wh.warehouse_id} className="p-5">
@@ -190,10 +226,16 @@ export default function WarehousesPage() {
                               <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
                           </button>
-                          {wh.status === 'ACTIVE' && (
+                          {wh.status === 'ACTIVE' ? (
                             <button className="p-1.5 hover:bg-red-50 rounded text-gray-400 hover:text-danger transition-colors" onClick={() => setDeleteTarget({ type: 'warehouse', id: wh.warehouse_id, name: wh.warehouse_name })} title="Ngừng sử dụng">
                               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                                 <path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                              </svg>
+                            </button>
+                          ) : (
+                            <button className="p-1.5 hover:bg-green-50 rounded text-gray-400 hover:text-success transition-colors" onClick={() => reactivateWhMut.mutate(wh.warehouse_id)} disabled={reactivateWhMut.isPending} title="Kích hoạt lại">
+                              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                               </svg>
                             </button>
                           )}
@@ -220,7 +262,8 @@ export default function WarehousesPage() {
               );
             })}
           </div>
-        )
+          )}
+        </>
       ) : (
         <Card>
           <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
@@ -229,10 +272,23 @@ export default function WarehousesPage() {
               onChange={setWhFilter}
               options={[{ value: 'all', label: 'Tất cả kho' }, ...warehouses.map((w) => ({ value: w.warehouse_id, label: w.warehouse_name }))]}
             />
+            <Select
+              value={locStatusFilter}
+              onChange={setLocStatusFilter}
+              options={[
+                { value: 'all', label: 'Tất cả trạng thái' },
+                { value: 'ACTIVE', label: 'Đang dùng' },
+                { value: 'INACTIVE', label: 'Ngừng dùng' },
+              ]}
+              className="w-44"
+            />
             <span className="text-sm text-gray-400 ml-auto">{filteredLocs.length} vị trí</span>
           </div>
           {filteredLocs.length === 0 ? (
-            <EmptyState title="Chưa có vị trí nào" action={canWriteCurrentTab ? { label: 'Thêm vị trí đầu tiên', onClick: openAddLocation } : undefined} />
+            <EmptyState
+              title={locations.length === 0 ? 'Chưa có vị trí nào' : 'Không có vị trí nào khớp bộ lọc'}
+              action={locations.length === 0 && canWriteCurrentTab ? { label: 'Thêm vị trí đầu tiên', onClick: openAddLocation } : undefined}
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -270,10 +326,16 @@ export default function WarehousesPage() {
                                 <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                               </svg>
                             </button>
-                            {loc.status === 'ACTIVE' && (
+                            {loc.status === 'ACTIVE' ? (
                               <button className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-danger transition-colors" onClick={() => setDeleteTarget({ type: 'location', id: loc.location_id, name: loc.location_code })} title="Ngừng sử dụng">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                                   <path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                </svg>
+                              </button>
+                            ) : (
+                              <button className="p-1.5 hover:bg-green-50 rounded-lg text-gray-400 hover:text-success transition-colors" onClick={() => reactivateLocMut.mutate(loc.location_id)} disabled={reactivateLocMut.isPending} title="Kích hoạt lại">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                 </svg>
                               </button>
                             )}
@@ -316,6 +378,16 @@ export default function WarehousesPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Mô tả</label>
             <Input value={warehouseForm.description} onChange={(v) => setWarehouseForm({ ...warehouseForm, description: v })} placeholder="Không bắt buộc" />
           </div>
+          {warehouseModal?.mode === 'edit' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Trạng thái</label>
+              <Select
+                value={warehouseForm.status}
+                onChange={(v) => setWarehouseForm({ ...warehouseForm, status: v as 'ACTIVE' | 'INACTIVE' })}
+                options={[{ value: 'ACTIVE', label: 'Đang hoạt động' }, { value: 'INACTIVE', label: 'Ngừng hoạt động' }]}
+              />
+            </div>
+          )}
         </div>
       </Modal>
 
@@ -364,6 +436,16 @@ export default function WarehousesPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Hộp</label>
             <Input value={locationForm.box} onChange={(v) => setLocationForm({ ...locationForm, box: v })} placeholder="Hộp K1" />
           </div>
+          {locationModal?.mode === 'edit' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Trạng thái</label>
+              <Select
+                value={locationForm.status}
+                onChange={(v) => setLocationForm({ ...locationForm, status: v as 'ACTIVE' | 'INACTIVE' })}
+                options={[{ value: 'ACTIVE', label: 'Đang dùng' }, { value: 'INACTIVE', label: 'Ngừng dùng' }]}
+              />
+            </div>
+          )}
         </div>
       </Modal>
 
