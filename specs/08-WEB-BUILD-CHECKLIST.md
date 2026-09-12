@@ -17,11 +17,11 @@
 
 > Build đúng theo bộ component đã thiết kế trong Figma (mục 2 của design system): Button (4 variant), Form controls, Badge/Tag, Card, Table (+ empty + skeleton), Toast, Modal, Tabs, Breadcrumb, Avatar, Progress Stepper.
 
-- [ ] B1. Button, Input, Select, Checkbox, Radio, Search bar (đủ trạng thái default/hover/focus/error/disabled).
-- [ ] B2. Badge/Tag (7 màu theo thiết kế), Card (stat card, content card).
-- [ ] B3. Table dùng chung (sort, filter, pagination, empty state, loading skeleton).
-- [ ] B4. Modal, Toast (4 loại: success/error/warning/info), Tabs, Breadcrumb, Avatar.
-- [ ] B5. Progress Stepper (dùng cho luồng nhập kho AI 3 bước).
+- [x] B1. Button, Input, Select, Checkbox, Radio, Search bar (đủ trạng thái default/hover/focus/error/disabled). Note (2026-09-12): `Btn`/`Input`/`Select` đã có sẵn (Figma Make) nhưng thiếu `disabled`/`error` — đã sửa trong `components/PageLayout.tsx`. `Checkbox`/`Radio`/`SearchInput` chưa từng tồn tại — viết mới trong `components/ui.tsx`.
+- [x] B2. Badge/Tag (7 màu theo thiết kế), Card (stat card, content card). Note (2026-09-12): `Badge` (7 màu) và `Card` (content card) đã đúng chuẩn, giữ nguyên. `StatCard` (2 biến thể hero/flat) viết mới, áp dụng vào `DashboardPage`. Kiểm tra riêng theo yêu cầu: Badge dùng nhất quán xuyên suốt các trang tồn kho (thấp/sắp hết/ổn định) — đúng; trạng thái phiếu (nháp/chờ duyệt/đã duyệt...) — phát hiện+sửa 1 lỗi màu thật (nhãn "Hoàn tất" lệch màu ở DisposalPage) + phát hiện quan trọng: state machine hiện tại không khớp `OrderStatus` thật (DRAFT/CONFIRMED/CANCELLED) — sẽ chuẩn hoá khi nối API ở Giai đoạn F. Chi tiết đầy đủ trong `07-DECISIONS-LOG.md`.
+- [x] B3. Table dùng chung (sort, filter, pagination, empty state, loading skeleton). Note (2026-09-12): `Th`/`Td` giữ nguyên. `Pagination`/`EmptyState`/`TableSkeleton` viết mới (Pagination+EmptyState áp dụng ngay vào InventoryPage/HistoryPage, thay code lặp tay). Sort chưa cần vì chưa trang nào có sort thật trên mock — sẽ thêm khi có dữ liệu thật cần sort ở Giai đoạn E-G.
+- [x] B4. Modal, Toast (4 loại: success/error/warning/info), Tabs, Breadcrumb, Avatar. Note (2026-09-12): cả 5 đều chưa có bản dùng chung — viết mới trong `components/ui.tsx`, áp dụng Modal vào Export/Import/Users, Tabs vào Categories/Warehouses, Avatar vào Sidebar/Users/Roles (sửa luôn bug màu tự chế ở RolesPage). ToastProvider mount ở `App.tsx` (chưa có nơi gọi `useToast()` vì chưa có API thật — sẽ dùng ở Giai đoạn C-G).
+- [x] B5. Progress Stepper (dùng cho luồng nhập kho AI 3 bước). Note (2026-09-12): trước đó viết tay trong `ImportPage.tsx`, đã tách thành `Stepper` dùng chung. Trong lúc sửa, phát hiện+sửa 1 bug thật (vi phạm Rules of Hooks trong `ImportPage.tsx`, chỉ lộ khi test bằng trình duyệt thật) — xem `07-DECISIONS-LOG.md`. Verify bằng Playwright headless: dựng dev server thật, đăng nhập, đi qua Dashboard/Users/Roles/Categories/Warehouses/Import, không còn lỗi console.
 
 ## Giai đoạn C — App Shell & Auth & Phân quyền
 

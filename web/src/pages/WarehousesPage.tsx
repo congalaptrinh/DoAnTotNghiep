@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import PageLayout, { Card, Badge, Btn, Th, Td } from '../components/PageLayout';
+import { Tabs } from '../components/ui';
 
 const warehouses = [
   { id: 'KHO-A', name: 'Kho A - Chính', address: '12 Lê Văn Lương, P.Tân Phú, Q.7, TP.HCM', manager: 'Nguyễn Văn An', phone: '0901 234 567', locations: 120, used: 87, status: 'active', type: 'main' },
@@ -33,17 +34,14 @@ export default function WarehousesPage() {
       subtitle="Quản lý danh sách kho và sơ đồ vị trí lưu trữ"
       actions={
         <>
-          <div className="flex bg-gray-100 rounded-lg p-1 text-sm">
-            {(['warehouses', 'locations'] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={`px-4 py-1.5 rounded-md font-medium transition-all ${tab === t ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-              >
-                {t === 'warehouses' ? 'Danh sách kho' : 'Vị trí lưu trữ'}
-              </button>
-            ))}
-          </div>
+          <Tabs
+            value={tab}
+            onChange={setTab}
+            options={[
+              { value: 'warehouses', label: 'Danh sách kho' },
+              { value: 'locations', label: 'Vị trí lưu trữ' },
+            ]}
+          />
           <Btn>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 5v14M5 12l7-7 7 7" />
@@ -101,7 +99,7 @@ export default function WarehousesPage() {
                       className="h-full rounded-full transition-all"
                       style={{
                         width: `${pct}%`,
-                        background: pct > 80 ? '#DC2626' : pct > 60 ? '#F59E0B' : '#4F46E5',
+                        background: pct > 80 ? 'var(--color-danger)' : pct > 60 ? 'var(--color-warning)' : 'var(--color-brand-from)',
                       }}
                     />
                   </div>

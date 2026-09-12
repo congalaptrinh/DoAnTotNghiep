@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import type { Page, UserRole } from '../types';
 import { ROLE_LABELS } from '../types';
+import { Avatar } from './ui';
 
 interface Props {
   currentPage: Page;
@@ -77,8 +78,7 @@ export default function Sidebar({ currentPage, onNavigate, userRole, onRoleChang
 
   return (
     <aside
-      className="fixed left-0 top-0 h-full flex flex-col z-40 overflow-hidden"
-      style={{ width: '220px', background: 'linear-gradient(160deg,#4F46E5 0%,#7C3AED 100%)' }}
+      className="fixed left-0 top-0 h-full flex flex-col z-40 overflow-hidden w-[220px] bg-gradient-to-b from-brand-from to-brand-to"
     >
       {/* Logo */}
       <div className="px-5 py-4 flex items-center gap-2.5 border-b border-white/10 flex-shrink-0">
@@ -169,9 +169,7 @@ export default function Sidebar({ currentPage, onNavigate, userRole, onRoleChang
       {/* User */}
       <div className="px-4 py-3 border-t border-white/10 flex-shrink-0">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-white/30 to-white/10 flex items-center justify-center text-white font-bold text-sm flex-shrink-0">
-            {userName.charAt(0)}
-          </div>
+          <Avatar name={userName} color="brand" size="sm" />
           <div className="flex-1 min-w-0">
             <div className="text-white text-sm font-semibold truncate">{userName}</div>
             <div className="text-white/45 text-[11px] truncate">{ROLE_LABELS[userRole]}</div>

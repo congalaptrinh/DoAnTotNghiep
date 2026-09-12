@@ -10,7 +10,7 @@ const receipts = [
 const statusConfig = {
   pending: { label: 'Chờ duyệt', color: 'yellow' as const },
   approved: { label: 'Đã duyệt', color: 'indigo' as const },
-  done: { label: 'Hoàn tất', color: 'gray' as const },
+  done: { label: 'Hoàn tất', color: 'green' as const },
 };
 
 export default function DisposalPage() {

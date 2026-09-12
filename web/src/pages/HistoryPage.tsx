@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import PageLayout, { Card, Badge, Btn, Select, Input } from '../components/PageLayout';
+import { Pagination } from '../components/ui';
 
 type LogType = 'import' | 'export' | 'transfer' | 'recovery' | 'stocktake' | 'disposal';
 
@@ -146,24 +147,7 @@ export default function HistoryPage() {
                   })}
                 </div>
 
-                {totalPages > 1 && (
-                  <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
-                    <span className="text-xs text-gray-400">
-                      {(curPage - 1) * PAGE_SIZE + 1}–{Math.min(curPage * PAGE_SIZE, filtered.length)} / {filtered.length}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <button onClick={() => setPage(Math.max(1, curPage - 1))} disabled={curPage === 1} className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-30 transition-colors">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6" /></svg>
-                      </button>
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                        <button key={p} onClick={() => setPage(p)} className={`w-7 h-7 rounded-lg text-xs font-medium transition-colors ${p === curPage ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>{p}</button>
-                      ))}
-                      <button onClick={() => setPage(Math.min(totalPages, curPage + 1))} disabled={curPage === totalPages} className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-30 transition-colors">
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round"><path d="M9 18l6-6-6-6" /></svg>
-                      </button>
-                    </div>
-                  </div>
-                )}
+                <Pagination page={curPage} totalPages={totalPages} totalItems={filtered.length} pageSize={PAGE_SIZE} onChange={setPage} />
               </>
             )}
           </Card>

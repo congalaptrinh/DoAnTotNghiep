@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import PageLayout, { Card, Badge, Btn, Input, Th, Td } from '../components/PageLayout';
+import { Modal, Avatar } from '../components/ui';
 
 const initialUsers = [
   { id: 'USR-001', name: 'Cao Xuân Khu', email: 'khu.cao@techstore.vn', role: 'admin', roleLabel: 'Quản trị viên', status: 'active', lastLogin: '05/09/2025 09:30' },
@@ -20,13 +21,6 @@ const roleOptions = [
 
 const roleColors: Record<string, 'indigo' | 'blue' | 'green' | 'gray'> = {
   admin: 'indigo', manager: 'blue', staff: 'green', viewer: 'gray',
-};
-
-const avatarBg: Record<string, string> = {
-  admin: 'bg-indigo-100 text-indigo-700',
-  manager: 'bg-blue-100 text-blue-700',
-  staff: 'bg-green-100 text-green-700',
-  viewer: 'bg-gray-100 text-gray-600',
 };
 
 type User = typeof initialUsers[0];
@@ -132,9 +126,7 @@ export default function UsersPage() {
                 <tr key={u.id} className="hover:bg-gray-50/60 transition-colors">
                   <Td>
                     <div className="flex items-center gap-2.5">
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm flex-shrink-0 ${avatarBg[u.role]}`}>
-                        {u.name.charAt(0)}
-                      </div>
+                      <Avatar name={u.name} color={roleColors[u.role]} />
                       <div>
                         <div className="font-semibold text-gray-900">{u.name}</div>
                         <div className="text-xs text-gray-400">{u.id}</div>
@@ -175,22 +167,18 @@ export default function UsersPage() {
         </div>
       </Card>
 
-      {/* Modal */}
-      {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setModal(null)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4 p-6">
-            <div className="flex items-center justify-between mb-5">
-              <h3 className="font-bold text-gray-900 text-lg">
-                {modal.mode === 'add' ? 'Thêm người dùng mới' : 'Chỉnh sửa người dùng'}
-              </h3>
-              <button onClick={() => setModal(null)} className="text-gray-400 hover:text-gray-600">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
+      <Modal
+        open={!!modal}
+        onClose={() => setModal(null)}
+        title={modal?.mode === 'add' ? 'Thêm người dùng mới' : 'Chỉnh sửa người dùng'}
+        footer={modal && (
+          <>
+            <Btn onClick={saveModal}>{modal.mode === 'add' ? 'Tạo tài khoản' : 'Lưu thay đổi'}</Btn>
+            <Btn variant="secondary" onClick={() => setModal(null)}>Hủy</Btn>
+          </>
+        )}
+      >
+        {modal && (
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Họ và tên *</label>
@@ -246,16 +234,8 @@ export default function UsersPage() {
                 </div>
               )}
             </div>
-
-            <div className="flex gap-3 mt-6">
-              <Btn onClick={saveModal}>
-                {modal.mode === 'add' ? 'Tạo tài khoản' : 'Lưu thay đổi'}
-              </Btn>
-              <Btn variant="secondary" onClick={() => setModal(null)}>Hủy</Btn>
-            </div>
-          </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </PageLayout>
   );
 }

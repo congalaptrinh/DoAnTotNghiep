@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { Page, UserRole } from './types';
+import { ToastProvider } from './components/ui';
 import Sidebar from './components/Sidebar';
 import LoginPage from './pages/LoginPage';
 import DashboardPage from './pages/DashboardPage';
@@ -43,22 +44,28 @@ export default function App() {
   const [userRole, setUserRole] = useState<UserRole>('admin');
 
   if (!isLoggedIn) {
-    return <LoginPage onLogin={() => setIsLoggedIn(true)} />;
+    return (
+      <ToastProvider>
+        <LoginPage onLogin={() => setIsLoggedIn(true)} />
+      </ToastProvider>
+    );
   }
 
   return (
-    <div className="flex h-full" style={{ backgroundColor: '#F8F9FB' }}>
-      <Sidebar
-        currentPage={currentPage}
-        onNavigate={(page) => setCurrentPage(page)}
-        userRole={userRole}
-        onRoleChange={setUserRole}
-        onLogout={() => setIsLoggedIn(false)}
-        userName="Cao Xuân Khu"
-      />
-      <main className="flex-1 overflow-auto" style={{ marginLeft: '220px' }}>
-        <PageRouter page={currentPage} onNavigate={setCurrentPage} />
-      </main>
-    </div>
+    <ToastProvider>
+      <div className="flex h-full bg-bg">
+        <Sidebar
+          currentPage={currentPage}
+          onNavigate={(page) => setCurrentPage(page)}
+          userRole={userRole}
+          onRoleChange={setUserRole}
+          onLogout={() => setIsLoggedIn(false)}
+          userName="Cao Xuân Khu"
+        />
+        <main className="flex-1 overflow-auto" style={{ marginLeft: '220px' }}>
+          <PageRouter page={currentPage} onNavigate={setCurrentPage} />
+        </main>
+      </div>
+    </ToastProvider>
   );
 }

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Page } from '../types';
 import PageLayout, { Card, Badge, Btn, Input, Select, Th, Td } from '../components/PageLayout';
+import { Pagination, EmptyState } from '../components/ui';
 
 const data = [
   { id: 'VT-001', name: 'IC555 Timer', category: 'Vi mạch tích hợp', warehouse: 'Kho A', location: 'A1-01-K3', qty: 250, available: 210, reserved: 40, min: 50, max: 500, unit: 'Cái', supplier: 'Bách Khoa Electronics', lastImport: '05/09/2025', status: 'ok' },
@@ -119,18 +120,10 @@ export default function InventoryPage({ onNavigate }: Props) {
 
             {/* Table */}
             {paged.length === 0 ? (
-              <div className="py-16 text-center">
-                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                <p className="text-gray-500 font-medium">Không tìm thấy kết quả</p>
-                <p className="text-gray-400 text-sm mt-1">Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm</p>
-                <button onClick={() => { setSearch(''); setWarehouse('all'); setStatus('all'); }} className="mt-3 text-sm text-indigo-600 hover:underline">
-                  Xóa bộ lọc
-                </button>
-              </div>
+              <EmptyState
+                description="Thử thay đổi bộ lọc hoặc từ khóa tìm kiếm"
+                action={{ label: 'Xóa bộ lọc', onClick: () => { setSearch(''); setWarehouse('all'); setStatus('all'); } }}
+              />
             ) : (
               <>
                 <div className="overflow-x-auto">
@@ -180,43 +173,7 @@ export default function InventoryPage({ onNavigate }: Props) {
                   </table>
                 </div>
 
-                {/* Pagination */}
-                {totalPages > 1 && (
-                  <div className="px-5 py-3 border-t border-gray-100 flex items-center justify-between">
-                    <span className="text-xs text-gray-400">
-                      Hiển thị {(currentPage - 1) * PAGE_SIZE + 1}–{Math.min(currentPage * PAGE_SIZE, filtered.length)} / {filtered.length}
-                    </span>
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => setPage(Math.max(1, currentPage - 1))}
-                        disabled={currentPage === 1}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M15 18l-6-6 6-6" />
-                        </svg>
-                      </button>
-                      {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                        <button
-                          key={p}
-                          onClick={() => setPage(p)}
-                          className={`w-7 h-7 rounded-lg text-xs font-medium transition-colors ${p === currentPage ? 'bg-indigo-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
-                        >
-                          {p}
-                        </button>
-                      ))}
-                      <button
-                        onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
-                        disabled={currentPage === totalPages}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-                      >
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M9 18l6-6-6-6" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                )}
+                <Pagination page={currentPage} totalPages={totalPages} totalItems={filtered.length} pageSize={PAGE_SIZE} onChange={setPage} />
               </>
             )}
           </Card>
@@ -228,7 +185,7 @@ export default function InventoryPage({ onNavigate }: Props) {
             <Card className="p-5 sticky top-6">
               <div className="flex items-start justify-between mb-4">
                 <div className="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center">
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#4F46E5" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--color-brand-from)" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
                     <path d="M20 7l-8-4-8 4 8 4 8-4zM4 7v10l8 4m0-14v14m8-14v10l-8 4" />
                   </svg>
                 </div>
@@ -277,7 +234,7 @@ export default function InventoryPage({ onNavigate }: Props) {
                     className="h-full rounded-full"
                     style={{
                       width: `${Math.min(100, (selected.qty / selected.max) * 100)}%`,
-                      background: selected.status === 'out' ? '#DC2626' : selected.status === 'low' ? '#F59E0B' : '#4F46E5',
+                      background: selected.status === 'out' ? 'var(--color-danger)' : selected.status === 'low' ? 'var(--color-warning)' : 'var(--color-brand-from)',
                     }}
                   />
                 </div>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import PageLayout, { Card, Badge, Btn, Th, Td } from '../components/PageLayout';
+import { Tabs } from '../components/ui';
 
 const categories = [
   {
@@ -64,20 +65,14 @@ export default function CategoriesPage() {
       subtitle="Quản lý cây danh mục và từ điển vật tư của hệ thống"
       actions={
         <>
-          <div className="flex bg-gray-100 rounded-lg p-1 text-sm">
-            <button
-              onClick={() => setTab('categories')}
-              className={`px-4 py-1.5 rounded-md font-medium transition-all ${tab === 'categories' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              Danh mục
-            </button>
-            <button
-              onClick={() => setTab('items')}
-              className={`px-4 py-1.5 rounded-md font-medium transition-all ${tab === 'items' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
-            >
-              Vật tư
-            </button>
-          </div>
+          <Tabs
+            value={tab}
+            onChange={setTab}
+            options={[
+              { value: 'categories', label: 'Danh mục' },
+              { value: 'items', label: 'Vật tư' },
+            ]}
+          />
           <Btn>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 5v14M5 12l7-7 7 7" />

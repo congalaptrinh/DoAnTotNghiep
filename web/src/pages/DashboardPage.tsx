@@ -1,5 +1,6 @@
 import type { Page } from '../types';
 import { Card } from '../components/PageLayout';
+import { StatCard } from '../components/ui';
 
 const weeklyData = [
   { day: 'T2', nhap: 45, xuat: 32 },
@@ -35,8 +36,8 @@ function WeeklyChart() {
         const xuatH = (d.xuat / maxVal) * chartH;
         return (
           <g key={d.day}>
-            <rect x={x} y={chartH - nhapH} width={barW} height={nhapH} fill="#4F46E5" rx={4} opacity={0.85} />
-            <rect x={x + barW + gap} y={chartH - xuatH} width={barW} height={xuatH} fill="#7C3AED" rx={4} opacity={0.85} />
+            <rect x={x} y={chartH - nhapH} width={barW} height={nhapH} fill="var(--color-brand-from)" rx={4} opacity={0.85} />
+            <rect x={x + barW + gap} y={chartH - xuatH} width={barW} height={xuatH} fill="var(--color-brand-to)" rx={4} opacity={0.85} />
             <text x={x + barW + gap / 2} y={chartH + 18} textAnchor="middle" fontSize={11} fill="#9CA3AF">{d.day}</text>
           </g>
         );
@@ -62,19 +63,16 @@ export default function DashboardPage({ onNavigate }: Props) {
   const today = new Date().toLocaleDateString('vi-VN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 
   const stats = [
-    { label: 'Tổng vật tư', value: '1,284', sub: '↑ 23 trong tuần này', color: 'from-indigo-500 to-indigo-600', icon: 'M20 7l-8-4-8 4 8 4 8-4zM4 7v10l8 4m0-14v14m8-14v10l-8 4', page: 'inventory' as Page },
-    { label: 'Sắp hết hàng', value: '7', sub: '3 mặt hàng cần đặt gấp', color: 'from-red-500 to-red-600', icon: 'M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z', page: 'inventory' as Page },
-    { label: 'Phiếu chờ duyệt', value: '12', sub: '5 nhập kho, 7 xuất kho', color: 'from-amber-500 to-amber-600', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', page: 'import' as Page },
-    { label: 'Số kho hoạt động', value: '4', sub: '2 kho chính, 2 kho phụ', color: 'from-green-500 to-green-600', icon: 'M3 21h18M3 10h18M3 7l9-4 9 4M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3', page: 'warehouses' as Page },
+    { label: 'Tổng vật tư', value: '1,284', sub: '↑ 23 trong tuần này', color: 'brand' as const, icon: 'M20 7l-8-4-8 4 8 4 8-4zM4 7v10l8 4m0-14v14m8-14v10l-8 4', page: 'inventory' as Page },
+    { label: 'Sắp hết hàng', value: '7', sub: '3 mặt hàng cần đặt gấp', color: 'danger' as const, icon: 'M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z', page: 'inventory' as Page },
+    { label: 'Phiếu chờ duyệt', value: '12', sub: '5 nhập kho, 7 xuất kho', color: 'warning' as const, icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2', page: 'import' as Page },
+    { label: 'Số kho hoạt động', value: '4', sub: '2 kho chính, 2 kho phụ', color: 'success' as const, icon: 'M3 21h18M3 10h18M3 7l9-4 9 4M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3', page: 'warehouses' as Page },
   ];
 
   return (
     <div className="min-h-full">
       {/* Hero banner */}
-      <div
-        className="px-8 py-8 relative overflow-hidden"
-        style={{ background: 'linear-gradient(135deg,#4F46E5 0%,#7C3AED 100%)' }}
-      >
+      <div className="px-8 py-8 relative overflow-hidden bg-gradient-to-br from-brand-from to-brand-to">
         <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-white/5 -translate-y-1/2 translate-x-1/4" />
         <div className="absolute bottom-0 left-1/3 w-40 h-40 rounded-full bg-white/5 translate-y-1/2" />
         <div className="relative z-10">
@@ -90,22 +88,16 @@ export default function DashboardPage({ onNavigate }: Props) {
         {/* Stat cards overlap hero */}
         <div className="relative z-10 grid grid-cols-2 lg:grid-cols-4 gap-4 mt-8">
           {stats.map((s) => (
-            <div
+            <StatCard
               key={s.label}
+              variant="hero"
+              label={s.label}
+              value={s.value}
+              sub={s.sub}
+              icon={s.icon}
+              color={s.color}
               onClick={() => onNavigate(s.page)}
-              className="bg-white rounded-2xl p-4 shadow-lg shadow-black/10 cursor-pointer hover:shadow-xl hover:-translate-y-0.5 transition-all"
-            >
-              <div className="flex items-start justify-between mb-3">
-                <div className={`w-9 h-9 rounded-xl bg-gradient-to-br ${s.color} flex items-center justify-center`}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                    <path d={s.icon} />
-                  </svg>
-                </div>
-              </div>
-              <div className="text-2xl font-bold text-gray-900">{s.value}</div>
-              <div className="text-sm text-gray-500 font-medium mt-0.5">{s.label}</div>
-              <div className="text-xs text-gray-400 mt-1">{s.sub}</div>
-            </div>
+            />
           ))}
         </div>
       </div>
@@ -121,19 +113,19 @@ export default function DashboardPage({ onNavigate }: Props) {
             </div>
             <div className="flex items-center gap-4 text-xs text-gray-500">
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-sm bg-indigo-500 inline-block" />
+                <span className="w-3 h-3 rounded-sm bg-brand-from inline-block" />
                 Nhập kho
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded-sm bg-violet-600 inline-block" />
+                <span className="w-3 h-3 rounded-sm bg-brand-to inline-block" />
                 Xuất kho
               </span>
             </div>
           </div>
           <WeeklyChart />
           <div className="flex justify-between mt-3 pt-3 border-t border-gray-50 text-xs text-gray-400">
-            <span>Tổng nhập: <b className="text-indigo-600 font-semibold">314 đơn vị</b></span>
-            <span>Tổng xuất: <b className="text-violet-600 font-semibold">266 đơn vị</b></span>
+            <span>Tổng nhập: <b className="text-brand-from font-semibold">314 đơn vị</b></span>
+            <span>Tổng xuất: <b className="text-brand-to font-semibold">266 đơn vị</b></span>
           </div>
         </Card>
 

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import PageLayout, { Card, Badge, Btn, Th, Td } from '../components/PageLayout';
+import { Stepper, Modal } from '../components/ui';
 
 const receipts = [
   { id: 'NK-2025-0891', date: '05/09/2025 09:42', supplier: 'Bách Khoa Electronics', creator: 'Trần Văn Bình', items: 3, qty: 250, status: 'approved' },
@@ -30,6 +31,7 @@ export default function ImportPage() {
   const [analyzing, setAnalyzing] = useState(false);
   const [detectedQtys, setDetectedQtys] = useState<number[]>(aiDetected.map((d) => d.qty));
   const [locations, setLocations] = useState<string[]>(aiDetected.map((d) => d.location));
+  const [detailId, setDetailId] = useState<string | null>(null);
 
   function handleAnalyze() {
     setAnalyzing(true);
@@ -49,30 +51,7 @@ export default function ImportPage() {
           </Btn>
         }
       >
-        {/* Stepper */}
-        <div className="flex items-center gap-0 mb-8">
-          {steps.map((s, i) => (
-            <div key={i} className="flex items-center flex-1">
-              <div className={`flex items-center gap-2.5 ${i + 1 <= step ? 'text-indigo-600' : 'text-gray-400'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 flex-shrink-0 ${
-                  i + 1 < step ? 'bg-indigo-600 border-indigo-600 text-white' :
-                  i + 1 === step ? 'border-indigo-600 text-indigo-600 bg-white' :
-                  'border-gray-200 text-gray-400 bg-white'
-                }`}>
-                  {i + 1 < step ? (
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={3} strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 13l4 4L19 7" />
-                    </svg>
-                  ) : i + 1}
-                </div>
-                <span className={`text-sm font-medium whitespace-nowrap hidden sm:block ${i + 1 === step ? 'text-indigo-700' : ''}`}>{s}</span>
-              </div>
-              {i < steps.length - 1 && (
-                <div className={`flex-1 h-0.5 mx-4 ${i + 1 < step ? 'bg-indigo-600' : 'bg-gray-200'}`} />
-              )}
-            </div>
-          ))}
-        </div>
+        <Stepper steps={steps} current={step} />
 
         {step === 1 && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -271,7 +250,7 @@ export default function ImportPage() {
           <div className="max-w-lg mx-auto">
             <Card className="p-8 text-center">
               <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#16A34A" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 13l4 4L19 7" />
                 </svg>
               </div>
@@ -293,7 +272,6 @@ export default function ImportPage() {
     );
   }
 
-  const [detailId, setDetailId] = useState<string | null>(null);
   const detail = receipts.find((r) => r.id === detailId);
 
   return (
@@ -348,23 +326,10 @@ export default function ImportPage() {
         </div>
       </Card>
 
-      {/* Receipt detail modal */}
-      {detail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDetailId(null)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="font-bold text-gray-900 text-lg">Chi tiết phiếu nhập kho</h3>
-                <p className="font-mono text-sm text-indigo-600 mt-0.5">{detail.id}</p>
-              </div>
-              <button onClick={() => setDetailId(null)} className="text-gray-400 hover:text-gray-600">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
+      <Modal open={!!detail} onClose={() => setDetailId(null)} title="Chi tiết phiếu nhập kho" size="lg">
+        {detail && (
+          <>
+            <p className="font-mono text-sm text-indigo-600 -mt-3 mb-4">{detail.id}</p>
             <div className="grid grid-cols-2 gap-3 mb-5">
               {[
                 { label: 'Nhà cung cấp', value: detail.supplier },
@@ -390,9 +355,9 @@ export default function ImportPage() {
                 <Btn variant="secondary" size="sm" onClick={() => setDetailId(null)}>Đóng</Btn>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
     </PageLayout>
   );
 }

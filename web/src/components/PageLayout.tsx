@@ -48,58 +48,84 @@ export function Badge({ color, children }: { color: 'green' | 'red' | 'yellow' |
 }
 
 export function Btn({
-  children, onClick, variant = 'primary', size = 'md', type = 'button',
+  children, onClick, variant = 'primary', size = 'md', type = 'button', disabled = false,
 }: {
   children: ReactNode;
   onClick?: (e?: React.MouseEvent) => void;
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
   size?: 'sm' | 'md';
   type?: 'button' | 'submit';
+  disabled?: boolean;
 }) {
-  const base = 'inline-flex items-center gap-2 font-medium rounded-lg transition-all cursor-pointer';
+  const base = 'inline-flex items-center gap-2 font-medium rounded-lg transition-all';
   const sizes = { sm: 'px-3 py-1.5 text-xs', md: 'px-4 py-2 text-sm' };
   const variants = {
-    primary: 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white hover:opacity-90 shadow-sm',
+    primary: 'bg-gradient-to-r from-brand-from to-brand-to text-white hover:opacity-90 shadow-sm',
     secondary: 'bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 shadow-sm',
-    danger: 'bg-red-600 text-white hover:bg-red-700',
+    danger: 'bg-danger text-white hover:opacity-90',
     ghost: 'text-gray-600 hover:bg-gray-100',
   };
   return (
-    <button type={type} onClick={onClick} className={`${base} ${sizes[size]} ${variants[variant]}`}>
+    <button
+      type={type}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
+      aria-disabled={disabled}
+      className={`${base} ${sizes[size]} ${variants[variant]} ${
+        disabled ? 'opacity-50 cursor-not-allowed pointer-events-none' : 'cursor-pointer'
+      }`}
+    >
       {children}
     </button>
   );
 }
 
-export function Input({ placeholder, value, onChange, type = 'text', className = '' }: {
+export function Input({ placeholder, value, onChange, type = 'text', className = '', error, disabled = false }: {
   placeholder?: string; value?: string; onChange?: (v: string) => void; type?: string; className?: string;
+  error?: string; disabled?: boolean;
 }) {
   return (
-    <input
-      type={type}
-      placeholder={placeholder}
-      value={value}
-      onChange={(e) => onChange?.(e.target.value)}
-      className={`px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent placeholder-gray-400 ${className}`}
-    />
+    <div className={className}>
+      <input
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange?.(e.target.value)}
+        className={`w-full px-3 py-2 text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:border-transparent placeholder-gray-400 transition-colors ${
+          error
+            ? 'border-danger focus:ring-danger/40'
+            : 'border-gray-200 focus:ring-indigo-400'
+        } ${disabled ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : ''}`}
+      />
+      {error && <p className="mt-1 text-xs text-danger">{error}</p>}
+    </div>
   );
 }
 
-export function Select({ value, onChange, options, className = '' }: {
+export function Select({ value, onChange, options, className = '', error, disabled = false }: {
   value?: string; onChange?: (v: string) => void;
   options: { value: string; label: string }[];
-  className?: string;
+  className?: string; error?: string; disabled?: boolean;
 }) {
   return (
-    <select
-      value={value}
-      onChange={(e) => onChange?.(e.target.value)}
-      className={`px-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 focus:border-transparent text-gray-700 ${className}`}
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>{o.label}</option>
-      ))}
-    </select>
+    <div className={className}>
+      <select
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange?.(e.target.value)}
+        className={`w-full px-3 py-2 text-sm border rounded-lg bg-white focus:outline-none focus:ring-2 focus:border-transparent text-gray-700 transition-colors ${
+          error
+            ? 'border-danger focus:ring-danger/40'
+            : 'border-gray-200 focus:ring-indigo-400'
+        } ${disabled ? 'bg-gray-50 text-gray-400 cursor-not-allowed' : ''}`}
+      >
+        {options.map((o) => (
+          <option key={o.value} value={o.value}>{o.label}</option>
+        ))}
+      </select>
+      {error && <p className="mt-1 text-xs text-danger">{error}</p>}
+    </div>
   );
 }
 

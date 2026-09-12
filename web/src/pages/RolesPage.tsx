@@ -1,4 +1,5 @@
 import PageLayout, { Card, Badge } from '../components/PageLayout';
+import { Avatar } from '../components/ui';
 
 const roles = [
   {
@@ -63,14 +64,7 @@ export default function RolesPage() {
           <Card key={role.id} className="p-5">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg ${
-                  role.color === 'indigo' ? 'bg-indigo-100 text-indigo-700' :
-                  role.color === 'blue' ? 'bg-blue-100 text-blue-700' :
-                  role.color === 'green' ? 'bg-green-100 text-green-700' :
-                  'bg-gray-100 text-gray-600'
-                }`}>
-                  {role.name.charAt(0)}
-                </div>
+                <Avatar name={role.name} color={role.color} size="md" />
                 <div>
                   <h3 className="font-bold text-gray-900">{role.name}</h3>
                   <Badge color={role.color}>{role.users} người dùng</Badge>

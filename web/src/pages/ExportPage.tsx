@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import PageLayout, { Card, Badge, Btn, Th, Td } from '../components/PageLayout';
+import { Modal } from '../components/ui';
 
 const receipts = [
   { id: 'XK-2025-0445', date: '05/09/2025 08:30', recipient: 'Lab IoT - Khoa CNTT', purpose: 'Bài thực hành IoT tháng 9', creator: 'Lê Thị Hoa', items: 2, qty: 22, status: 'approved' },
@@ -66,7 +67,7 @@ export default function ExportPage() {
 
             {/* Warning banner */}
             <div className="mx-5 mt-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2.5">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#DC2626" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-danger)" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="flex-shrink-0 mt-0.5">
                 <path d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
               </svg>
               <div>
@@ -194,23 +195,10 @@ export default function ExportPage() {
         </div>
       </Card>
 
-      {/* Detail modal */}
-      {detail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setDetailId(null)} />
-          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4 p-6">
-            <div className="flex items-start justify-between mb-4">
-              <div>
-                <h3 className="font-bold text-gray-900 text-lg">Chi tiết phiếu xuất kho</h3>
-                <p className="font-mono text-sm text-violet-600 mt-0.5">{detail.id}</p>
-              </div>
-              <button onClick={() => setDetailId(null)} className="text-gray-400 hover:text-gray-600">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-
+      <Modal open={!!detail} onClose={() => setDetailId(null)} title="Chi tiết phiếu xuất kho" size="lg">
+        {detail && (
+          <>
+            <p className="font-mono text-sm text-violet-600 -mt-3 mb-4">{detail.id}</p>
             <div className="grid grid-cols-2 gap-3 mb-5">
               {[
                 { label: 'Người nhận', value: detail.recipient },
@@ -241,9 +229,9 @@ export default function ExportPage() {
                 <Btn variant="secondary" size="sm" onClick={() => setDetailId(null)}>Đóng</Btn>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </>
+        )}
+      </Modal>
     </PageLayout>
   );
 }
