@@ -20,10 +20,12 @@
 
 ## Giai đoạn B — Auth & Phân quyền
 
-- [ ] B1. Màn Đăng nhập — gọi `POST /api/auth/login` thật, lưu JWT vào secure storage.
-- [ ] B2. Provider/Context lấy user hiện tại qua `GET /api/auth/me`, lưu role.
-- [ ] B3. Hệ thống phân quyền dùng chung (1 chỗ duy nhất, tương tự `config/permissions.ts` bên Web) — quyết định menu/nút nào hiện theo role. Vì Mobile chủ yếu dành cho `warehouse_staff`, nhưng vẫn hỗ trợ đăng nhập được các role khác (ẩn bớt tính năng theo đúng phân quyền thật).
-- [ ] B4. Tự động đăng xuất khi token hết hạn/401, quay về màn Đăng nhập.
+- [x] B1. Màn Đăng nhập — gọi `POST /api/auth/login` thật, lưu JWT vào secure storage. **Note:** `lib/screens/auth/login_screen.dart`.
+- [x] B2. Provider/Context lấy user hiện tại qua `GET /api/auth/me`, lưu role. **Note:** `lib/providers/auth_provider.dart` (Riverpod `AuthNotifier`), tự khôi phục phiên lúc mở app.
+- [x] B3. Hệ thống phân quyền dùng chung (1 chỗ duy nhất, tương tự `config/permissions.ts` bên Web) — quyết định menu/nút nào hiện theo role. Vì Mobile chủ yếu dành cho `warehouse_staff`, nhưng vẫn hỗ trợ đăng nhập được các role khác (ẩn bớt tính năng theo đúng phân quyền thật). **Note:** `lib/utils/permissions.dart`, khớp `RESOURCE_WRITE_ACCESS` bên Web cho import_orders/export_orders/ai_detect.
+- [x] B4. Tự động đăng xuất khi token hết hạn/401, quay về màn Đăng nhập. **Note:** `ApiClient.setUnauthorizedHandler` + `go_router` redirect (`lib/router.dart`).
+
+**Bằng chứng RBAC (rủi ro cao, có test cụ thể):** `flutter test` — 25/25 pass, gồm `test/permissions_test.dart` (17 test logic role thuần) + `test/auth_integration_test.dart` (7 test gọi Backend thật với 4 tài khoản admin/manager/staff/viewer, verify đúng role + chặn sai mật khẩu/thiếu token bằng 401).
 
 ## Giai đoạn C — Trang chủ & Điều hướng
 
