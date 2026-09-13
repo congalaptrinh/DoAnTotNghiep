@@ -12,11 +12,11 @@
 
 ## Giai đoạn A — Nền tảng dự án
 
-- [ ] A1. Khởi tạo project Flutter trong thư mục `mobile/` (`flutter create .`), xác nhận chạy được trên emulator/thiết bị thật (hoặc Chrome nếu dùng Flutter Web để dễ demo không cần emulator).
-- [ ] A2. Cài package cần thiết: `dio` (HTTP client), `flutter_secure_storage` (lưu JWT), state management (chọn 1: `riverpod` hoặc `provider`, ghi quyết định vào decisions log), `image_picker` hoặc `camera` (chụp ảnh AI), `go_router` (điều hướng).
-- [ ] A3. Thiết lập Design Tokens Flutter (`ThemeData` dùng chung: màu, font, bo góc) — khớp CHÍNH XÁC giá trị đã chốt ở Web (`web/src/styles/tokens.css`). Ghi vào decisions log.
-- [ ] A4. Setup API client: base URL từ config/env, interceptor gắn JWT tự động, xử lý lỗi tập trung theo đúng format `{ success, data, message }` của Backend thật (giống `web/src/services/apiClient.ts` đã có — có thể tham khảo logic y hệt).
-- [ ] A5. Cấu trúc thư mục: `lib/{screens,widgets,services,models,providers,utils}`. Ghi convention vào decisions log.
+- [x] A1. Khởi tạo project Flutter trong thư mục `mobile/` (`flutter create .`), xác nhận chạy được trên emulator/thiết bị thật (hoặc Chrome nếu dùng Flutter Web để dễ demo không cần emulator). **Note:** `flutter create --org com.techstore.wms --project-name wms_mobile .`. Xác nhận bằng `flutter analyze` + `flutter test` + `flutter build web` (không dùng `flutter run` ở giai đoạn setup — xem quyết định trong `07-DECISIONS-LOG.md`); chạy giao diện thật để dành tới sau Giai đoạn C.
+- [x] A2. Cài package cần thiết: `dio` (HTTP client), `flutter_secure_storage` (lưu JWT), state management (chọn 1: `riverpod` hoặc `provider`, ghi quyết định vào decisions log), `image_picker` hoặc `camera` (chụp ảnh AI), `go_router` (điều hướng). **Note:** chọn Riverpod + image_picker, lý do ghi trong decisions log.
+- [x] A3. Thiết lập Design Tokens Flutter (`ThemeData` dùng chung: màu, font, bo góc) — khớp CHÍNH XÁC giá trị đã chốt ở Web (`web/src/styles/tokens.css`). Ghi vào decisions log. **Note:** `lib/utils/app_theme.dart`.
+- [x] A4. Setup API client: base URL từ config/env, interceptor gắn JWT tự động, xử lý lỗi tập trung theo đúng format `{ success, data, message }` của Backend thật (giống `web/src/services/apiClient.ts` đã có — có thể tham khảo logic y hệt). **Note:** `lib/services/api_client.dart` + `secure_storage_service.dart` + `lib/utils/constants.dart`.
+- [x] A5. Cấu trúc thư mục: `lib/{screens,widgets,services,models,providers,utils}`. Ghi convention vào decisions log. **Note:** đã tạo, convention ghi trong decisions log.
 
 ## Giai đoạn B — Auth & Phân quyền
 
