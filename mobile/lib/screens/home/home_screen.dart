@@ -10,13 +10,39 @@ import '../../utils/app_theme.dart';
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
 
+  Future<void> _confirmLogout(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Đăng xuất'),
+        content: const Text('Bạn có chắc muốn đăng xuất khỏi tài khoản này?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(context).pop(false), child: const Text('Huỷ')),
+          TextButton(onPressed: () => Navigator.of(context).pop(true), child: const Text('Đăng xuất')),
+        ],
+      ),
+    );
+    if (confirmed == true) {
+      await ref.read(authProvider.notifier).logout();
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authProvider).user;
     final statsAsync = ref.watch(dashboardStatsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('TechStore WMS')),
+      appBar: buildBrandAppBar(
+        'TechStore WMS',
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Đăng xuất',
+            onPressed: () => _confirmLogout(context, ref),
+          ),
+        ],
+      ),
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(dashboardStatsProvider.future),
         child: statsAsync.when(
@@ -33,7 +59,13 @@ class HomeScreen extends ConsumerWidget {
                   const SizedBox(width: 12),
                   Expanded(child: _StatCard(label: 'Sắp hết hàng', value: stats.lowStockCount, color: AppColors.warning)),
                   const SizedBox(width: 12),
-                  Expanded(child: _StatCard(label: 'Chờ xác nhận', value: stats.pendingOrdersCount, color: AppColors.brandFrom)),
+                  Expanded(
+                    child: _StatCard(
+                      label: 'Phiếu nhập/xuất chờ xác nhận',
+                      value: stats.pendingOrdersCount,
+                      color: AppColors.brandFrom,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 24),

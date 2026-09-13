@@ -5,6 +5,7 @@ import '../../models/item.dart';
 import '../../models/order_summary.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/inventory_providers.dart';
+import '../../utils/app_theme.dart';
 import '../../utils/permissions.dart';
 import 'quick_order_form_screen.dart';
 
@@ -21,7 +22,7 @@ class ItemDetailScreen extends ConsumerWidget {
     final canExport = canWrite(role, MobileWritableResource.exportOrders);
 
     return Scaffold(
-      appBar: AppBar(title: Text(item.itemName)),
+      appBar: buildBrandAppBar(item.itemName),
       body: Column(
         children: [
           Padding(

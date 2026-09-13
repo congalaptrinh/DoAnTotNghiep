@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../utils/app_theme.dart';
+
 /// Placeholder tab "Lịch sử" — nội dung thật thuộc Giai đoạn F, chưa làm
 /// (đang dừng ở C+D theo yêu cầu). Chỉ giữ chỗ trong Bottom Navigation (C1).
 class HistoryPlaceholderScreen extends StatelessWidget {
@@ -8,7 +10,7 @@ class HistoryPlaceholderScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Lịch sử')),
+      appBar: buildBrandAppBar('Lịch sử'),
       body: const Center(
         child: Padding(
           padding: EdgeInsets.all(24),

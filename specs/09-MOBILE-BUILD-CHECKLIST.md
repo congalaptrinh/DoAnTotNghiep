@@ -52,6 +52,12 @@
 - **Phần bắt buộc người dùng tự test bằng tay** (chụp ảnh thật, xin quyền camera thật, xem overlay bounding box hiển thị đúng trên ảnh thật chụp — công cụ không tự thao tác được trên thiết bị): xem hướng dẫn cụ thể đã gửi kèm báo cáo.
 - Sự cố môi trường phát sinh khi build cho thiết bị thật (không liên quan code Dart): máy chưa có Android NDK 28.2.13676358 và bộ cài `sdkmanager` mới (Android CLI) bị lỗi khi tự động tải NDK (`Package ndk not found`/crash native) — đã tải thủ công NDK r28c từ kho Google chính thức (`dl.google.com/android/repository/android-ndk-r28c-windows.zip`, verify đúng SHA1 trong `repository2-3.xml`) và giải nén đúng vào `%LOCALAPPDATA%\Android\sdk\ndk\28.2.13676358`, không sửa code/cấu hình dự án.
 
+**Vá lỗi/thiếu sót phát hiện sau khi người dùng tự test thật (2026-09-13, trước khi sang Giai đoạn F):**
+- Thêm nút đăng xuất ở AppBar Trang chủ (bị mất khi C1/C2 thay thế màn tạm Giai đoạn B — màn tạm đó có nút đăng xuất, `HomeScreen` thật thì không).
+- Áp `AppColors.brandGradient` làm nền cho MỌI AppBar (qua hàm `buildBrandAppBar` mới ở `app_theme.dart`) — khớp đúng ý định đã ghi trong comment A3 nhưng trước đó chưa từng được lắp vào AppBar nào.
+- Sửa công thức "Sắp hết hàng" ở `dashboard_provider.dart`: đổi từ cộng dồn tồn kho theo item rồi mới so với `min_stock`, sang đếm theo TỪNG DÒNG tồn kho (mỗi kho/vị trí) có `available_quantity <= min_stock` — đúng hệt Web (`useDashboardStats.ts` dòng 77). Đã verify bằng dữ liệu thật: item min_stock=10, tồn 8+8 ở 2 vị trí — công thức cũ tính 0 (sai), công thức mới tính đúng 2 (khớp Web).
+- Đổi nhãn "Chờ xác nhận" → "Phiếu nhập/xuất chờ xác nhận" (Mobile chỉ đếm DRAFT của 2 loại phiếu, không phải 6 loại như Web — đổi nhãn để không gây hiểu lầm khi so với Web).
+
 ## Giai đoạn F — Lịch sử
 
 - [ ] F1. Danh sách các phiếu do người dùng tạo gần đây, mỗi dòng icon màu theo loại nghiệp vụ (đồng bộ màu với Web), trạng thái badge (DRAFT/CONFIRMED/CANCELLED — đúng 3 giá trị thật, không bịa thêm).

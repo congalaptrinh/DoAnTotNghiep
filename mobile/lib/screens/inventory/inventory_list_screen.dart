@@ -35,7 +35,7 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
     final itemsAsync = ref.watch(itemsWithStockProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Tồn kho')),
+      appBar: buildBrandAppBar('Tồn kho'),
       body: Column(
         children: [
           Padding(

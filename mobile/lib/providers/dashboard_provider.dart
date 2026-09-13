@@ -34,11 +34,16 @@ final dashboardStatsProvider = FutureProvider<DashboardStats>((ref) async {
     OrderService.instance.listExport(),
   ).wait;
 
-  final stockByItem = <String, num>{};
-  for (final row in inventory) {
-    stockByItem[row.itemId] = (stockByItem[row.itemId] ?? 0) + row.availableQuantity;
-  }
-  final lowStockCount = items.where((i) => (stockByItem[i.itemId] ?? 0) <= i.minStock).length;
+  // Đếm theo TỪNG DÒNG tồn kho (mỗi kho/vị trí riêng biệt), giống hệt Web
+  // (`useDashboardStats.ts` dòng 77: `row.available_quantity <= row.item.min_stock`)
+  // — KHÔNG cộng dồn theo item trước khi so sánh, nếu không sẽ ra số khác Web
+  // (vd 1 item tồn 8+8 ở 2 vị trí, min_stock=10: Web đếm 2 dòng sắp hết hàng,
+  // cộng dồn trước sẽ ra tổng 16 > 10 và bị tính nhầm là KHÔNG sắp hết hàng).
+  final minStockByItem = {for (final i in items) i.itemId: i.minStock};
+  final lowStockCount = inventory.where((row) {
+    final minStock = minStockByItem[row.itemId];
+    return minStock != null && row.availableQuantity <= minStock;
+  }).length;
 
   final recentOrders = [...allImport, ...allExport]
       .where((o) => userId != null && o.createdByUserId == userId)

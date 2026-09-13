@@ -8,6 +8,7 @@ import '../../services/api_client.dart';
 import '../../services/order_service.dart';
 import '../../services/storage_location_service.dart';
 import '../../services/warehouse_service.dart';
+import '../../utils/app_theme.dart';
 
 /// Form tạo phiếu nhập/xuất "nhanh" (D3) — vật tư đã chọn sẵn từ D2 (không lặp
 /// lại ô tìm kiếm vật tư của D1). Tối giản: kho -> vị trí -> số lượng -> 1 nút
@@ -111,7 +112,7 @@ class _QuickOrderFormScreenState extends State<QuickOrderFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(_isImport ? 'Tạo phiếu nhập nhanh' : 'Tạo phiếu xuất nhanh')),
+      appBar: buildBrandAppBar(_isImport ? 'Tạo phiếu nhập nhanh' : 'Tạo phiếu xuất nhanh'),
       body: _loadingWarehouses
           ? const Center(child: CircularProgressIndicator())
           : Form(

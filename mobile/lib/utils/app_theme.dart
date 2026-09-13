@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 class AppColors {
   AppColors._();
 
-  // Gradient thương hiệu: AppBar, nút hành động chính, màn Đăng nhập
+  // Gradient thương hiệu: AppBar (qua `buildBrandAppBar`), nút hành động chính, màn Đăng nhập
   static const brandFrom = Color(0xFF4F46E5);
   static const brandTo = Color(0xFF7C3AED);
 
@@ -47,6 +47,9 @@ class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.bg,
       dividerColor: AppColors.border,
+      // Fallback cho AppBar không dùng `buildBrandAppBar` (ThemeData.appBarTheme
+      // không nhận Gradient cho backgroundColor — phải áp gradient thủ công
+      // qua `flexibleSpace` ở từng AppBar, xem `buildBrandAppBar` bên dưới).
       appBarTheme: const AppBarTheme(
         backgroundColor: AppColors.surface,
         foregroundColor: Colors.black87,
@@ -131,4 +134,18 @@ Color orderStatusColor(String status) {
     default:
       return Colors.grey;
   }
+}
+
+/// AppBar dùng gradient thương hiệu — DÙNG Ở MỌI MÀN HÌNH thay vì `AppBar()`
+/// thường, để khớp đúng ý định đã ghi ở A3 (gradient áp cho AppBar, không chỉ
+/// nút bấm/màn Đăng nhập). `ThemeData.appBarTheme` không nhận `Gradient` cho
+/// `backgroundColor` nên phải làm trong suốt + vẽ gradient qua `flexibleSpace`.
+AppBar buildBrandAppBar(String title, {List<Widget>? actions}) {
+  return AppBar(
+    title: Text(title),
+    backgroundColor: Colors.transparent,
+    foregroundColor: Colors.white,
+    flexibleSpace: const DecoratedBox(decoration: BoxDecoration(gradient: AppColors.brandGradient)),
+    actions: actions,
+  );
 }

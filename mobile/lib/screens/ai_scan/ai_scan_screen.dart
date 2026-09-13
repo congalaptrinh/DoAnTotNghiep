@@ -8,6 +8,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../providers/auth_provider.dart';
 import '../../services/ai_service.dart';
 import '../../services/api_client.dart';
+import '../../utils/app_theme.dart';
 import '../../utils/permissions.dart';
 import 'ai_result_screen.dart';
 
@@ -68,7 +69,7 @@ class _AiScanScreenState extends ConsumerState<AiScanScreen> {
     final canScan = canWrite(role, MobileWritableResource.aiDetect);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Quét AI')),
+      appBar: buildBrandAppBar('Quét AI'),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),

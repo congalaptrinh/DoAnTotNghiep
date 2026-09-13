@@ -146,7 +146,7 @@ class _AiResultScreenState extends State<AiResultScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Kết quả nhận diện')),
+      appBar: buildBrandAppBar('Kết quả nhận diện'),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : Column(
