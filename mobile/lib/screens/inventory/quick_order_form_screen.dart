@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/item.dart';
 import '../../models/order_summary.dart';
@@ -13,17 +12,17 @@ import '../../services/warehouse_service.dart';
 /// Form tạo phiếu nhập/xuất "nhanh" (D3) — vật tư đã chọn sẵn từ D2 (không lặp
 /// lại ô tìm kiếm vật tư của D1). Tối giản: kho -> vị trí -> số lượng -> 1 nút
 /// xác nhận lớn, đúng tinh thần "nhân viên kho thao tác nhanh tại hiện trường".
-class QuickOrderFormScreen extends ConsumerStatefulWidget {
+class QuickOrderFormScreen extends StatefulWidget {
   final Item item;
   final OrderKind kind;
 
   const QuickOrderFormScreen({super.key, required this.item, required this.kind});
 
   @override
-  ConsumerState<QuickOrderFormScreen> createState() => _QuickOrderFormScreenState();
+  State<QuickOrderFormScreen> createState() => _QuickOrderFormScreenState();
 }
 
-class _QuickOrderFormScreenState extends ConsumerState<QuickOrderFormScreen> {
+class _QuickOrderFormScreenState extends State<QuickOrderFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _qtyController = TextEditingController();
 

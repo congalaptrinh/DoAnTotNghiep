@@ -45,6 +45,8 @@ dependencies:
   go_router: ^14.6.2
   # Chụp ảnh / chọn ảnh cho luồng AI nhận diện (Giai đoạn E)
   image_picker: ^1.1.2
+  # Xin quyền camera đúng chuẩn Flutter trước khi mở máy ảnh (Giai đoạn E)
+  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:

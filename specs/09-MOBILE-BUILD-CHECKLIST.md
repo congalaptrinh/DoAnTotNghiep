@@ -40,13 +40,17 @@
 
 ## Giai đoạn E — Luồng chụp ảnh AI (phần quan trọng nhất, độ rủi ro cao)
 
-- [ ] E1. Màn hình Camera — full-screen, nút chụp lớn ở giữa dưới, xin quyền camera đúng chuẩn Flutter (`permission_handler`).
-- [ ] E2. Gửi ảnh chụp được lên `POST /api/ai/detect` thật, hiển thị loading rõ ràng trong lúc chờ.
-- [ ] E3. Màn kết quả — ảnh có vẽ bounding box (theo tỉ lệ % thật từ kích thước ảnh trả về, tương tự cách Web đã làm ở F1), danh sách nhãn nhận diện dạng card vuốt ngang, mỗi card có ô sửa số lượng.
-- [ ] E4. Bắt buộc map mỗi nhãn AI sang vật tư + vị trí thật (giống Web) vì mock AI không gắn `item_id`.
-- [ ] E5. Nút "Xác nhận tạo phiếu nhập" — gọi `POST /api/import-orders/from-ai` thật, xác nhận tồn kho tăng đúng sau khi tạo.
+- [x] E1. Màn hình Camera — full-screen, nút chụp lớn ở giữa dưới, xin quyền camera đúng chuẩn Flutter (`permission_handler`). **Note:** `lib/screens/ai_scan/ai_scan_screen.dart` — `Permission.camera.request()` trước khi mở `image_picker` (ImageSource.camera); permanently-denied → `openAppSettings()`. Thêm `android.permission.CAMERA` vào `AndroidManifest.xml`.
+- [x] E2. Gửi ảnh chụp được lên `POST /api/ai/detect` thật, hiển thị loading rõ ràng trong lúc chờ. **Note:** `lib/services/ai_service.dart` (multipart field `image`, đúng hợp đồng đã CHỐT ở 07-DECISIONS-LOG.md), nút chụp đổi thành spinner + "Đang nhận diện..." trong lúc chờ.
+- [x] E3. Màn kết quả — ảnh có vẽ bounding box (theo tỉ lệ % thật từ kích thước ảnh trả về, tương tự cách Web đã làm ở F1), danh sách nhãn nhận diện dạng card vuốt ngang, mỗi card có ô sửa số lượng. **Note:** `lib/screens/ai_scan/ai_result_screen.dart` — decode `annotated_image` (data URI) bằng `ui.instantiateImageCodec`, overlay `Positioned` theo `scaleX/scaleY = kích thước hiển thị / kích thước gốc pixel`, cùng công thức Web.
+- [x] E4. Bắt buộc map mỗi nhãn AI sang vật tư + vị trí thật (giống Web) vì mock AI không gắn `item_id`. **Note:** mỗi card có dropdown Vật tư + dropdown Vị trí (phụ thuộc 1 kho chọn chung cho cả phiếu); số lượng = 0 nghĩa là bỏ nhãn đó khỏi phiếu (thay cho nút xoá dòng bên Web).
+- [x] E5. Nút "Xác nhận tạo phiếu nhập" — gọi `POST /api/import-orders/from-ai` thật, xác nhận tồn kho tăng đúng sau khi tạo. **Note:** `OrderService.createFromAi()` — 1 lời gọi duy nhất (khác D3, order không lộ DRAFT ra ngoài).
 
-**Test bắt buộc kỹ cho Giai đoạn E:** thử luồng đầy đủ từ chụp ảnh (hoặc chọn ảnh có sẵn nếu dùng Web/emulator không có camera thật) → nhận kết quả → sửa số lượng → xác nhận → verify tồn kho qua API.
+**Bằng chứng Giai đoạn E (rủi ro cao, có test cụ thể):**
+- `flutter analyze` sạch, `flutter test` 18/18 pass, `flutter build apk --debug` build thành công, cài (`adb install`) và khởi chạy thật trên điện thoại Android thật (RMX2205, Android 13) — logcat xác nhận activity vẽ xong (HAS_DRAWN), không có `FATAL EXCEPTION`/crash trong process của app.
+- Verify toàn bộ hợp đồng dữ liệu + luồng nghiệp vụ bằng gọi API thật (tài khoản `staff.test@warehouse.local`): `POST /api/ai/detect` trả đúng 7 detections (5 resistor + 2 ic_chip, khớp mock đã chốt); map resistor→vật tư A (số lượng 5), ic_chip→vật tư B (số lượng 2), cùng 1 kho + 1 vị trí, gọi `POST /api/import-orders/from-ai` → HTTP 201, `status: CONFIRMED` ngay (không qua DRAFT); verify tồn kho tăng đúng 0→5 và 0→2 tại đúng vị trí; `stock_movements` ghi đúng loại `IMPORT`.
+- **Phần bắt buộc người dùng tự test bằng tay** (chụp ảnh thật, xin quyền camera thật, xem overlay bounding box hiển thị đúng trên ảnh thật chụp — công cụ không tự thao tác được trên thiết bị): xem hướng dẫn cụ thể đã gửi kèm báo cáo.
+- Sự cố môi trường phát sinh khi build cho thiết bị thật (không liên quan code Dart): máy chưa có Android NDK 28.2.13676358 và bộ cài `sdkmanager` mới (Android CLI) bị lỗi khi tự động tải NDK (`Package ndk not found`/crash native) — đã tải thủ công NDK r28c từ kho Google chính thức (`dl.google.com/android/repository/android-ndk-r28c-windows.zip`, verify đúng SHA1 trong `repository2-3.xml`) và giải nén đúng vào `%LOCALAPPDATA%\Android\sdk\ndk\28.2.13676358`, không sửa code/cấu hình dự án.
 
 ## Giai đoạn F — Lịch sử
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../ai_scan/ai_scan_screen.dart';
 import '../inventory/inventory_list_screen.dart';
-import 'ai_scan_placeholder_screen.dart';
 import 'history_placeholder_screen.dart';
 import 'home_screen.dart';
 
@@ -21,7 +21,7 @@ class _HomeShellState extends State<HomeShell> {
   static const _screens = [
     HomeScreen(),
     InventoryListScreen(),
-    AiScanPlaceholderScreen(),
+    AiScanScreen(),
     HistoryPlaceholderScreen(),
   ];
 
