@@ -22,11 +22,30 @@ class AppColors {
   static const surface = Color(0xFFFFFFFF);
   static const border = Color(0xFFE5E7EB);
 
+  // Chữ — khớp đúng thang xám Tailwind mà Web dùng nhiều nhất cho từng cấp độ
+  // (grep `web/src`: gray-900 dùng cho tiêu đề/số liệu chính, gray-700 cho nội
+  // dung thường — dùng nhiều nhất, gray-500 cho phụ chú). KHÔNG dùng
+  // `Colors.black54/45/26` rải rác nữa — quá nhạt, không khớp độ đậm Web.
+  static const textPrimary = Color(0xFF111827); // gray-900 — tiêu đề, số liệu chính
+  static const textBody = Color(0xFF374151); // gray-700 — nội dung thường
+  static const textMuted = Color(0xFF6B7280); // gray-500 — phụ chú, nhãn phụ
+
   static const brandGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [brandFrom, brandTo],
   );
+}
+
+/// Khoảng cách chuẩn dùng xuyên suốt app — tránh mỗi màn tự chọn số padding
+/// khác nhau (8/12/16/20/24 rải rác) làm layout lệch nhau giữa các màn.
+class AppSpacing {
+  AppSpacing._();
+
+  static const double screenPadding = 16; // lề ngoài cùng của mọi màn hình
+  static const double sectionGap = 24; // khoảng cách giữa 2 khối nội dung lớn
+  static const double itemGap = 12; // khoảng cách giữa các item cùng cấp (card, dòng form)
+  static const double tightGap = 6; // khoảng cách giữa các phần tử liền kề trong 1 item
 }
 
 class AppTheme {
@@ -47,6 +66,15 @@ class AppTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: AppColors.bg,
       dividerColor: AppColors.border,
+      // Đặt màu chữ mặc định đậm hơn Material3 tự sinh — mọi `Text` không tự
+      // set màu (vd `Theme.of(context).textTheme.titleLarge`) sẽ tự động đủ
+      // tương phản, không cần mỗi màn tự nhớ set màu.
+      textTheme: const TextTheme(
+        titleLarge: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.bold),
+        titleMedium: TextStyle(color: AppColors.textPrimary, fontWeight: FontWeight.w600),
+        bodyLarge: TextStyle(color: AppColors.textBody),
+        bodyMedium: TextStyle(color: AppColors.textBody),
+      ),
       // Fallback cho AppBar không dùng `buildBrandAppBar` (ThemeData.appBarTheme
       // không nhận Gradient cho backgroundColor — phải áp gradient thủ công
       // qua `flexibleSpace` ở từng AppBar, xem `buildBrandAppBar` bên dưới).
@@ -58,7 +86,8 @@ class AppTheme {
       ),
       cardTheme: CardThemeData(
         color: AppColors.surface,
-        elevation: 0,
+        elevation: 1,
+        shadowColor: Colors.black.withValues(alpha: 0.10),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
           side: const BorderSide(color: AppColors.border),
@@ -93,7 +122,7 @@ class AppTheme {
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
         backgroundColor: AppColors.surface,
         selectedItemColor: AppColors.brandFrom,
-        unselectedItemColor: Colors.grey,
+        unselectedItemColor: AppColors.textMuted,
         type: BottomNavigationBarType.fixed,
       ),
     );

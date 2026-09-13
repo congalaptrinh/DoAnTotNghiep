@@ -39,11 +39,16 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
       body: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.fromLTRB(
+              AppSpacing.screenPadding,
+              AppSpacing.itemGap,
+              AppSpacing.screenPadding,
+              AppSpacing.tightGap,
+            ),
             child: TextField(
               onChanged: _onSearchChanged,
               decoration: const InputDecoration(
-                prefixIcon: Icon(Icons.search),
+                prefixIcon: Icon(Icons.search, color: AppColors.textMuted),
                 hintText: 'Tìm theo tên hoặc mã vật tư',
               ),
             ),
@@ -51,24 +56,46 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
           Expanded(
             child: itemsAsync.when(
               data: (rows) => rows.isEmpty
-                  ? const Center(child: Text('Không tìm thấy vật tư'))
+                  ? const Center(
+                      child: Text('Không tìm thấy vật tư', style: TextStyle(color: AppColors.textMuted)),
+                    )
                   : RefreshIndicator(
                       onRefresh: () => ref.refresh(itemsWithStockProvider.future),
                       child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.tightGap),
                         itemCount: rows.length,
                         itemBuilder: (context, i) {
                           final (item, stock) = rows[i];
+                          final low = stock <= item.minStock;
+                          final stockColor = low ? AppColors.danger : AppColors.success;
                           return Card(
-                            margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.screenPadding,
+                              vertical: AppSpacing.tightGap,
+                            ),
                             child: ListTile(
-                              title: Text(item.itemName, style: const TextStyle(fontWeight: FontWeight.w600)),
-                              subtitle: Text('${item.itemCode} · ${item.unit}'),
-                              trailing: Text(
-                                '$stock',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: stock <= item.minStock ? AppColors.danger : AppColors.success,
-                                ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                              title: Text(
+                                item.itemName,
+                                style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                              ),
+                              subtitle: Text(
+                                '${item.itemCode} · ${item.unit}',
+                                style: const TextStyle(color: AppColors.textMuted),
+                              ),
+                              trailing: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    '$stock',
+                                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: stockColor),
+                                  ),
+                                  Text(
+                                    low ? 'sắp hết' : 'còn hàng',
+                                    style: TextStyle(fontSize: 11, color: stockColor),
+                                  ),
+                                ],
                               ),
                               onTap: () => Navigator.of(context).push(
                                 MaterialPageRoute(builder: (_) => ItemDetailScreen(item: item)),
@@ -79,7 +106,7 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
                       ),
                     ),
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Lỗi tải dữ liệu: $e')),
+              error: (e, _) => Center(child: Text('Lỗi tải dữ liệu: $e', style: const TextStyle(color: AppColors.danger))),
             ),
           ),
         ],

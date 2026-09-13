@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../ai_scan/ai_scan_screen.dart';
+import '../import/import_hub_screen.dart';
 import '../inventory/inventory_list_screen.dart';
 import 'history_placeholder_screen.dart';
 import 'home_screen.dart';
@@ -8,6 +8,8 @@ import 'home_screen.dart';
 /// Bottom Navigation 4 tab (C1) — thay thế hoàn toàn `HomePlaceholderScreen`
 /// của Giai đoạn B. `IndexedStack` giữ state từng tab khi chuyển qua lại (đơn
 /// giản hơn route lồng go_router, không cần deep-link riêng cho từng tab).
+/// Tab 3 đổi từ "Quét AI" sang "Nhập kho" (mở màn chọn Nhập kho thủ công/Quét
+/// AI) sau khi bổ sung form nhập kho đa dòng — xem 07-DECISIONS-LOG.md.
 class HomeShell extends StatefulWidget {
   const HomeShell({super.key});
 
@@ -21,7 +23,7 @@ class _HomeShellState extends State<HomeShell> {
   static const _screens = [
     HomeScreen(),
     InventoryListScreen(),
-    AiScanScreen(),
+    ImportHubScreen(),
     HistoryPlaceholderScreen(),
   ];
 
@@ -40,9 +42,9 @@ class _HomeShellState extends State<HomeShell> {
             label: 'Tồn kho',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.camera_alt_outlined),
-            activeIcon: Icon(Icons.camera_alt),
-            label: 'Quét AI',
+            icon: Icon(Icons.move_to_inbox_outlined),
+            activeIcon: Icon(Icons.move_to_inbox),
+            label: 'Nhập kho',
           ),
           BottomNavigationBarItem(icon: Icon(Icons.history_outlined), activeIcon: Icon(Icons.history), label: 'Lịch sử'),
         ],

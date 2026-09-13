@@ -272,11 +272,11 @@ class _LabelCardState extends State<_LabelCard> {
             children: [
               Text(
                 row.className,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.textPrimary),
               ),
               Text(
                 'AI nhận diện: ${row.detectedCount}',
-                style: const TextStyle(fontSize: 11, color: Colors.black45),
+                style: const TextStyle(fontSize: 11, color: AppColors.textMuted),
               ),
               const SizedBox(height: 6),
               TextField(

@@ -12,8 +12,11 @@ Hỗ trợ nhân viên kho thao tác nhanh trên điện thoại khi làm việc
 - **Danh sách vật tư** — xem, tìm kiếm theo tên/mã vật tư.
 - **Xem tồn kho theo vật tư** — số lượng tại từng kho/vị trí.
 - **Xem vị trí lưu trữ** — chi tiết khu vực/kệ/ngăn/hộp.
-- **Tạo phiếu nhập kho nhanh** — chọn kho, vật tư, số lượng, hoặc dùng ảnh (xem mục 3).
-- **Tạo phiếu xuất kho nhanh** — chọn kho, vật tư, vị trí, số lượng, mục đích/dự án.
+- **Tạo phiếu nhập/xuất kho nhanh** (từ chi tiết 1 vật tư cụ thể) — chọn kho, vị trí, số lượng cho ĐÚNG vật tư đang xem, 1 dòng/phiếu, tối giản tối đa cho thao tác tại chỗ.
+- **Nhập kho** (mục riêng ở menu chính, KHÔNG xuất phát từ 1 vật tư cụ thể) — 2 lựa chọn:
+  - **Nhập kho thủ công** — chọn 1 kho, thêm được NHIỀU DÒNG vật tư (không giới hạn 1 dòng/phiếu), mỗi dòng chọn vật tư + vị trí + số lượng riêng, thêm/xoá được từng dòng — cùng tinh thần với form nhập kho đầy đủ bên Web.
+  - **Quét ảnh AI** — xem mục 3.
+  > **Quyết định 2026-09-13 (thay đổi phạm vi):** ban đầu Mobile chỉ có "phiếu nhanh" 1 dòng để tối giản; sau khi người dùng tự test thấy không đủ dùng khi cần nhận nhiều vật tư 1 lần, đã bổ sung "Nhập kho thủ công" đa dòng. "Phiếu nhanh" 1 dòng (từ chi tiết vật tư) vẫn giữ nguyên cho thao tác tức thời. Xem `07-DECISIONS-LOG.md`.
 - **Chụp ảnh linh kiện** — dùng camera hoặc chọn ảnh từ thư viện, gửi lên hệ thống.
 - **Xem kết quả AI nhận diện** — hiển thị ảnh có bounding box, danh sách lớp + số lượng + độ tin cậy.
 - **Xác nhận/chỉnh sửa kết quả AI** — sửa số lượng/loại linh kiện trước khi tạo phiếu nhập.
@@ -32,6 +35,7 @@ Hỗ trợ nhân viên kho thao tác nhanh trên điện thoại khi làm việc
 - Hỗ trợ hoạt động cơ bản khi mạng chậm (loading state rõ ràng, retry khi lỗi mạng).
 - Xin quyền camera/thư viện ảnh đúng chuẩn Flutter (permission_handler hoặc tương đương).
 - Responsive cho nhiều kích thước màn hình điện thoại.
+- **Màu sắc phải ĐỦ ĐẬM, tương phản rõ ràng, dễ đọc thật sự** — dùng đúng token đã chốt (`brandFrom`/`brandTo`/`danger`/`warning`/`success`/`info`/`accent`), áp dụng nhất quán cho AppBar/nút/icon trên toàn app, không chỉ điểm xuyết. Chữ phụ chú không dùng màu đen nhạt (`black45`/`black26` kiểu Flutter mặc định) mà dùng đúng thang xám Web đang dùng (tương đương Tailwind gray-500/700/900). Khoảng cách/padding giữa các phần tử dùng thống nhất 1 bộ hằng số chuẩn cho toàn app, không tự chọn số khác nhau ở từng màn.
 
 ## 5. Gợi ý kỹ thuật (không bắt buộc cứng)
 

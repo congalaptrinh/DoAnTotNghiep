@@ -13,6 +13,8 @@ import '../../utils/app_theme.dart';
 /// Form tạo phiếu nhập/xuất "nhanh" (D3) — vật tư đã chọn sẵn từ D2 (không lặp
 /// lại ô tìm kiếm vật tư của D1). Tối giản: kho -> vị trí -> số lượng -> 1 nút
 /// xác nhận lớn, đúng tinh thần "nhân viên kho thao tác nhanh tại hiện trường".
+/// Nhập kho đa dòng (nhiều vật tư/phiếu) dùng màn hình riêng
+/// `screens/import/manual_import_screen.dart`, không dùng form này.
 class QuickOrderFormScreen extends StatefulWidget {
   final Item item;
   final OrderKind kind;
@@ -93,9 +95,9 @@ class _QuickOrderFormScreenState extends State<QuickOrderFormScreen> {
     );
     try {
       if (_isImport) {
-        await OrderService.instance.createImportAndConfirm(warehouseId: _warehouseId!, item: quickItem);
+        await OrderService.instance.createImportAndConfirm(warehouseId: _warehouseId!, items: [quickItem]);
       } else {
-        await OrderService.instance.createExportAndConfirm(warehouseId: _warehouseId!, item: quickItem);
+        await OrderService.instance.createExportAndConfirm(warehouseId: _warehouseId!, items: [quickItem]);
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -118,11 +120,18 @@ class _QuickOrderFormScreenState extends State<QuickOrderFormScreen> {
           : Form(
               key: _formKey,
               child: ListView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(AppSpacing.screenPadding),
                 children: [
-                  Text(widget.item.itemName, style: Theme.of(context).textTheme.titleMedium),
-                  Text('${widget.item.itemCode} · ${widget.item.unit}', style: const TextStyle(color: Colors.black54)),
-                  const SizedBox(height: 20),
+                  Text(
+                    widget.item.itemName,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: AppSpacing.tightGap),
+                  Text(
+                    '${widget.item.itemCode} · ${widget.item.unit}',
+                    style: const TextStyle(color: AppColors.textMuted),
+                  ),
+                  const SizedBox(height: AppSpacing.sectionGap),
                   DropdownButtonFormField<String>(
                     initialValue: _warehouseId,
                     decoration: const InputDecoration(labelText: 'Kho'),
@@ -132,7 +141,7 @@ class _QuickOrderFormScreenState extends State<QuickOrderFormScreen> {
                     onChanged: _onWarehouseChanged,
                     validator: (v) => v == null ? 'Chọn kho' : null,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.itemGap),
                   DropdownButtonFormField<String>(
                     initialValue: _locationId,
                     decoration: InputDecoration(
@@ -150,11 +159,11 @@ class _QuickOrderFormScreenState extends State<QuickOrderFormScreen> {
                     onChanged: _warehouseId == null ? null : (v) => setState(() => _locationId = v),
                     validator: (v) => v == null ? 'Chọn vị trí' : null,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: AppSpacing.itemGap),
                   TextFormField(
                     controller: _qtyController,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: AppColors.textPrimary),
                     textAlign: TextAlign.center,
                     decoration: const InputDecoration(labelText: 'Số lượng'),
                     validator: (v) {
@@ -164,10 +173,10 @@ class _QuickOrderFormScreenState extends State<QuickOrderFormScreen> {
                     },
                   ),
                   if (_error != null) ...[
-                    const SizedBox(height: 16),
-                    Text(_error!, style: const TextStyle(color: Colors.red)),
+                    const SizedBox(height: AppSpacing.itemGap),
+                    Text(_error!, style: const TextStyle(color: AppColors.danger)),
                   ],
-                  const SizedBox(height: 24),
+                  const SizedBox(height: AppSpacing.sectionGap),
                   ElevatedButton(
                     onPressed: _submitting ? null : _submit,
                     child: _submitting

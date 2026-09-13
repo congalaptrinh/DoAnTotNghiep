@@ -29,7 +29,7 @@
 
 ## Giai đoạn C — Trang chủ & Điều hướng
 
-- [x] C1. Bottom navigation bar 4 tab: Trang chủ / Tồn kho / Quét AI / Lịch sử. **Note:** `lib/screens/home/home_shell.dart` (IndexedStack, không dùng route lồng go_router — đơn giản hơn vì không cần deep-link riêng cho từng tab). Quét AI/Lịch sử là placeholder "Sắp ra mắt" (Giai đoạn E/F chưa làm).
+- [x] C1. Bottom navigation bar 4 tab: Trang chủ / Tồn kho / Nhập kho / Lịch sử. **Note:** `lib/screens/home/home_shell.dart` (IndexedStack, không dùng route lồng go_router — đơn giản hơn vì không cần deep-link riêng cho từng tab). Lịch sử là placeholder "Sắp ra mắt" (Giai đoạn F chưa làm). Tab 3 ban đầu tên "Quét AI" (Giai đoạn E), đổi thành "Nhập kho" khi bổ sung `ImportHubScreen` (xem D4/D5) — Quét AI giờ là 1 trong 2 lựa chọn bên trong tab này.
 - [x] C2. Trang chủ: lời chào, vài số liệu tóm tắt dạng card lớn (tái sử dụng logic từ `useDashboardStats` bên Web nếu hợp lý), danh sách phiếu gần đây của chính người dùng đang đăng nhập. **Note:** `lib/screens/home/home_screen.dart` + `lib/providers/dashboard_provider.dart` — gộp `GET /items`+`/inventory`+`/import-orders`+`/export-orders` (không có endpoint tổng hợp riêng, giống Web). "Phiếu gần đây của tôi" là tính năng mới không có bên Web (Web chỉ có stock-movements chung), lọc client-side theo `created_by`/`requested_by` == user hiện tại.
 
 ## Giai đoạn D — Tồn kho & Vật tư (đọc + tạo phiếu nhanh)
@@ -37,6 +37,8 @@
 - [x] D1. Danh sách vật tư — tìm kiếm, mỗi item 1 card (tên, mã, tồn kho hiện tại), nối `GET /api/items` + `GET /api/inventory`. **Note:** `lib/screens/inventory/inventory_list_screen.dart`, debounce 400ms.
 - [x] D2. Chi tiết vật tư — tồn kho theo từng kho/vị trí, 2 nút "Tạo phiếu nhập nhanh" / "Tạo phiếu xuất nhanh". **Note:** `lib/screens/inventory/item_detail_screen.dart`, dùng endpoint thật `GET /api/inventory/:itemId`; 2 nút ẩn theo đúng RBAC B3 (`canWrite`).
 - [x] D3. Form tạo phiếu nhập/xuất nhanh — tối giản: chọn kho (dropdown to), chọn vật tư (ô tìm kiếm), nhập số lượng (bàn phím số to), 1 nút xác nhận lớn. Nối `POST /api/import-orders` (+ confirm) / `POST /api/export-orders` (+ confirm) thật, xử lý đúng lỗi tồn kho không đủ. **Note:** `lib/screens/inventory/quick_order_form_screen.dart`. Vật tư đã chọn sẵn từ D2 (không lặp lại ô tìm kiếm của D1). Đã verify bằng gọi API thật: tạo+xác nhận phiếu nhập tăng đúng tồn kho (0→3), tạo+xác nhận phiếu xuất vượt tồn kho trả đúng lỗi 400 "Tồn kho không đủ để xuất..." hiển thị nguyên văn lên form.
+- [x] D4. **(Bổ sung 2026-09-13 — thay đổi phạm vi, xem `07-DECISIONS-LOG.md`)** Màn "Nhập kho" tổng — mục riêng ở bottom nav (không xuất phát từ 1 vật tư cụ thể), hiện 2 lựa chọn: "Nhập kho thủ công" / "Quét AI". **Note:** `lib/screens/import/import_hub_screen.dart`, 2 nút dạng card lớn, ẩn theo `canWrite` (import_orders/ai_detect).
+- [x] D5. **(Bổ sung 2026-09-13)** Form "Nhập kho thủ công" đa dòng — chọn 1 kho chung, thêm/xoá được nhiều dòng, mỗi dòng chọn vật tư + vị trí + số lượng riêng, giống tinh thần `ImportPage.tsx` bên Web. **Note:** `lib/screens/import/manual_import_screen.dart`, dùng chung `OrderService.createImportAndConfirm(warehouseId, items: List<QuickOrderItem>)` với D3 (đã tổng quát hoá từ 1 item thành danh sách). Đã verify bằng gọi API thật: 1 phiếu 3 dòng (3 vật tư khác nhau) tạo+xác nhận thành công, tồn kho cả 3 vật tư tăng đúng số lượng từng dòng.
 
 ## Giai đoạn E — Luồng chụp ảnh AI (phần quan trọng nhất, độ rủi ro cao)
 
@@ -57,6 +59,12 @@
 - Áp `AppColors.brandGradient` làm nền cho MỌI AppBar (qua hàm `buildBrandAppBar` mới ở `app_theme.dart`) — khớp đúng ý định đã ghi trong comment A3 nhưng trước đó chưa từng được lắp vào AppBar nào.
 - Sửa công thức "Sắp hết hàng" ở `dashboard_provider.dart`: đổi từ cộng dồn tồn kho theo item rồi mới so với `min_stock`, sang đếm theo TỪNG DÒNG tồn kho (mỗi kho/vị trí) có `available_quantity <= min_stock` — đúng hệt Web (`useDashboardStats.ts` dòng 77). Đã verify bằng dữ liệu thật: item min_stock=10, tồn 8+8 ở 2 vị trí — công thức cũ tính 0 (sai), công thức mới tính đúng 2 (khớp Web).
 - Đổi nhãn "Chờ xác nhận" → "Phiếu nhập/xuất chờ xác nhận" (Mobile chỉ đếm DRAFT của 2 loại phiếu, không phải 6 loại như Web — đổi nhãn để không gây hiểu lầm khi so với Web).
+
+**Nâng cấp toàn diện giao diện (2026-09-13, sau khi người dùng tự test lần 2 thấy vẫn chưa đạt):**
+- **Màu sắc**: thêm token chữ `AppColors.textPrimary`/`textBody`/`textMuted` (khớp đúng thang xám Web dùng nhiều nhất — grep `web/src` xác nhận gray-900/700/500), thay toàn bộ `Colors.black54/45/26` rải rác trong mọi màn hình. `CardThemeData` tăng `elevation: 0` → `1` + `shadowColor` (Web dùng `shadow-sm` cho card, Mobile trước đó phẳng hoàn toàn).
+- **Layout**: thêm `AppSpacing` (`screenPadding`/`sectionGap`/`itemGap`/`tightGap`) — 1 bộ hằng số duy nhất, áp dụng lại cho Trang chủ/Tồn kho/Chi tiết vật tư/Nhập kho thay vì mỗi màn tự chọn số padding khác nhau.
+- **D4/D5 (đổi phạm vi)**: xem D4/D5 ở trên.
+- Đã build lại, cài + chạy lại trên điện thoại thật (`HILJAQFYGM55QOPZ`), không crash. `flutter analyze` sạch, `flutter test` 18/18 pass. Đã verify bằng API thật luồng nhập kho đa dòng: 1 phiếu 3 dòng (3 vật tư), tồn kho cả 3 tăng đúng.
 
 ## Giai đoạn F — Lịch sử
 

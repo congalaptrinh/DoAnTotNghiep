@@ -25,53 +25,84 @@ class ItemDetailScreen extends ConsumerWidget {
       appBar: buildBrandAppBar(item.itemName),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(AppSpacing.screenPadding),
+            color: AppColors.surface,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(item.itemCode, style: const TextStyle(color: Colors.black54)),
-                Text('Đơn vị: ${item.unit}'),
+                Text(item.itemCode, style: const TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.w500)),
+                const SizedBox(height: AppSpacing.tightGap),
+                Text('Đơn vị: ${item.unit}', style: const TextStyle(color: AppColors.textBody)),
               ],
             ),
           ),
+          const Divider(height: 1),
           Expanded(
             child: rowsAsync.when(
               data: (rows) => rows.isEmpty
-                  ? const Center(child: Text('Chưa có tồn kho tại kho/vị trí nào'))
+                  ? const Center(
+                      child: Text('Chưa có tồn kho tại kho/vị trí nào', style: TextStyle(color: AppColors.textMuted)),
+                    )
                   : ListView.builder(
+                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.tightGap),
                       itemCount: rows.length,
                       itemBuilder: (context, i) {
                         final r = rows[i];
-                        return ListTile(
-                          title: Text(r.warehouse?.warehouseName ?? r.warehouseId),
-                          subtitle: Text('Vị trí: ${r.location?.locationCode ?? r.locationId}'),
-                          trailing: Text('${r.availableQuantity}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                        return Card(
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: AppSpacing.screenPadding,
+                            vertical: AppSpacing.tightGap,
+                          ),
+                          child: ListTile(
+                            leading: const Icon(Icons.warehouse_outlined, color: AppColors.brandFrom),
+                            title: Text(
+                              r.warehouse?.warehouseName ?? r.warehouseId,
+                              style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                            ),
+                            subtitle: Text(
+                              'Vị trí: ${r.location?.locationCode ?? r.locationId}',
+                              style: const TextStyle(color: AppColors.textMuted),
+                            ),
+                            trailing: Text(
+                              '${r.availableQuantity}',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textPrimary),
+                            ),
+                          ),
                         );
                       },
                     ),
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Lỗi tải dữ liệu: $e')),
+              error: (e, _) => Center(child: Text('Lỗi tải dữ liệu: $e', style: const TextStyle(color: AppColors.danger))),
             ),
           ),
           if (canImport || canExport)
-            Padding(
-              padding: const EdgeInsets.all(16),
+            Container(
+              padding: const EdgeInsets.all(AppSpacing.screenPadding),
+              decoration: const BoxDecoration(
+                color: AppColors.surface,
+                border: Border(top: BorderSide(color: AppColors.border)),
+              ),
               child: Row(
                 children: [
                   if (canImport)
                     Expanded(
-                      child: OutlinedButton(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.info),
                         onPressed: () => _openQuickOrder(context, OrderKind.importOrder),
-                        child: const Text('Tạo phiếu nhập nhanh'),
+                        icon: const Icon(Icons.call_received, size: 18),
+                        label: const Text('Nhập nhanh'),
                       ),
                     ),
-                  if (canImport && canExport) const SizedBox(width: 12),
+                  if (canImport && canExport) const SizedBox(width: AppSpacing.itemGap),
                   if (canExport)
                     Expanded(
-                      child: ElevatedButton(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent),
                         onPressed: () => _openQuickOrder(context, OrderKind.exportOrder),
-                        child: const Text('Tạo phiếu xuất nhanh'),
+                        icon: const Icon(Icons.call_made, size: 18),
+                        label: const Text('Xuất nhanh'),
                       ),
                     ),
                 ],

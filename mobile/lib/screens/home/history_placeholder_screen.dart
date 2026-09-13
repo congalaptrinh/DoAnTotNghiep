@@ -17,9 +17,9 @@ class HistoryPlaceholderScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.history, size: 48, color: Colors.black26),
+              Icon(Icons.history, size: 48, color: AppColors.textMuted),
               SizedBox(height: 12),
-              Text('Sắp ra mắt — Giai đoạn F', style: TextStyle(color: Colors.black45)),
+              Text('Sắp ra mắt — Giai đoạn F', style: TextStyle(color: AppColors.textMuted)),
             ],
           ),
         ),

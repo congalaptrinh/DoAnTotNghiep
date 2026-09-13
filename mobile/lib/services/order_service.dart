@@ -11,25 +11,27 @@ class QuickOrderItem {
   Map<String, dynamic> toJson() => {'item_id': itemId, 'location_id': locationId, 'quantity': quantity};
 }
 
-/// Phiếu nhập/xuất "nhanh" (D3): tạo (DRAFT) rồi xác nhận ngay — 2 lời gọi
-/// tuần tự, giống `ExportPage.tsx` bên Web (Backend không có API tạo+xác nhận
-/// 1 bước, trừ `/import-orders/from-ai` dành riêng cho luồng AI Giai đoạn E).
+/// Phiếu nhập/xuất "nhanh" (D3) hoặc "thủ công đa dòng" (D4/D5): tạo (DRAFT)
+/// rồi xác nhận ngay — 2 lời gọi tuần tự, giống `ExportPage.tsx` bên Web
+/// (Backend không có API tạo+xác nhận 1 bước, trừ `/import-orders/from-ai`
+/// dành riêng cho luồng AI Giai đoạn E). Nhận `List<QuickOrderItem>` — D3 gọi
+/// với đúng 1 phần tử, form đa dòng gọi với N phần tử, dùng chung 1 hàm.
 class OrderService {
   OrderService._();
   static final instance = OrderService._();
 
-  Future<void> createImportAndConfirm({required String warehouseId, required QuickOrderItem item}) async {
+  Future<void> createImportAndConfirm({required String warehouseId, required List<QuickOrderItem> items}) async {
     final created = await ApiClient.instance.post<Map<String, dynamic>>(
       '/import-orders',
-      data: {'warehouse_id': warehouseId, 'items': [item.toJson()]},
+      data: {'warehouse_id': warehouseId, 'items': items.map((e) => e.toJson()).toList()},
     );
     await ApiClient.instance.post('/import-orders/${created['import_id']}/confirm');
   }
 
-  Future<void> createExportAndConfirm({required String warehouseId, required QuickOrderItem item}) async {
+  Future<void> createExportAndConfirm({required String warehouseId, required List<QuickOrderItem> items}) async {
     final created = await ApiClient.instance.post<Map<String, dynamic>>(
       '/export-orders',
-      data: {'warehouse_id': warehouseId, 'items': [item.toJson()]},
+      data: {'warehouse_id': warehouseId, 'items': items.map((e) => e.toJson()).toList()},
     );
     await ApiClient.instance.post('/export-orders/${created['export_id']}/confirm');
   }

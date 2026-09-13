@@ -76,14 +76,18 @@ class _AiScanScreenState extends ConsumerState<AiScanScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.camera_alt_outlined, size: 64, color: Colors.black26),
-              const SizedBox(height: 16),
+              CircleAvatar(
+                radius: 40,
+                backgroundColor: AppColors.accent.withValues(alpha: 0.15),
+                child: const Icon(Icons.camera_alt_outlined, size: 40, color: AppColors.accent),
+              ),
+              const SizedBox(height: AppSpacing.itemGap),
               Text(
                 canScan
                     ? 'Chụp ảnh linh kiện để tạo phiếu nhập kho tự động'
                     : 'Bạn không có quyền tạo phiếu nhập bằng AI',
                 textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.black54),
+                style: const TextStyle(color: AppColors.textBody, fontSize: 15),
               ),
               const SizedBox(height: 32),
               if (canScan)

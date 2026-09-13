@@ -47,41 +47,55 @@ class HomeScreen extends ConsumerWidget {
         onRefresh: () => ref.refresh(dashboardStatsProvider.future),
         child: statsAsync.when(
           data: (stats) => ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(AppSpacing.screenPadding),
             children: [
               Text('Xin chào, ${user?.fullName ?? ''}', style: Theme.of(context).textTheme.titleLarge),
-              const SizedBox(height: 4),
-              Text(user?.role.roleName.label ?? '', style: const TextStyle(color: Colors.black54)),
-              const SizedBox(height: 20),
+              const SizedBox(height: AppSpacing.tightGap),
+              Text(
+                user?.role.roleName.label ?? '',
+                style: const TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: AppSpacing.sectionGap),
               Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(child: _StatCard(label: 'Vật tư', value: stats.totalItems, color: AppColors.info)),
-                  const SizedBox(width: 12),
-                  Expanded(child: _StatCard(label: 'Sắp hết hàng', value: stats.lowStockCount, color: AppColors.warning)),
-                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _StatCard(icon: Icons.inventory_2, label: 'Vật tư', value: stats.totalItems, color: AppColors.info),
+                  ),
+                  const SizedBox(width: AppSpacing.itemGap),
                   Expanded(
                     child: _StatCard(
-                      label: 'Phiếu nhập/xuất chờ xác nhận',
+                      icon: Icons.warning_amber_rounded,
+                      label: 'Sắp hết hàng',
+                      value: stats.lowStockCount,
+                      color: AppColors.warning,
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.itemGap),
+                  Expanded(
+                    child: _StatCard(
+                      icon: Icons.pending_actions,
+                      label: 'Phiếu chờ xác nhận',
                       value: stats.pendingOrdersCount,
                       color: AppColors.brandFrom,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: AppSpacing.sectionGap),
               Text('Phiếu gần đây của bạn', style: Theme.of(context).textTheme.titleMedium),
-              const SizedBox(height: 8),
+              const SizedBox(height: AppSpacing.itemGap),
               if (stats.recentOrders.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Text('Chưa có phiếu nào', style: TextStyle(color: Colors.black45)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text('Chưa có phiếu nào', style: TextStyle(color: AppColors.textMuted)),
                 )
               else
                 ...stats.recentOrders.map((o) => _RecentOrderTile(order: o)),
             ],
           ),
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, _) => Center(child: Text('Lỗi tải dữ liệu: $e')),
+          error: (e, _) => Center(child: Text('Lỗi tải dữ liệu: $e', style: const TextStyle(color: AppColors.danger))),
         ),
       ),
     );
@@ -89,11 +103,12 @@ class HomeScreen extends ConsumerWidget {
 }
 
 class _StatCard extends StatelessWidget {
+  final IconData icon;
   final String label;
   final int value;
   final Color color;
 
-  const _StatCard({required this.label, required this.value, required this.color});
+  const _StatCard({required this.icon, required this.label, required this.value, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -101,10 +116,17 @@ class _StatCard extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
+            Icon(icon, color: color, size: 22),
+            const SizedBox(height: 6),
             Text('$value', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: color)),
             const SizedBox(height: 4),
-            Text(label, textAlign: TextAlign.center, style: const TextStyle(fontSize: 12, color: Colors.black54)),
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 12, color: AppColors.textBody, fontWeight: FontWeight.w500),
+            ),
           ],
         ),
       ),
@@ -123,15 +145,21 @@ class _RecentOrderTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: AppSpacing.tightGap),
       child: ListTile(
-        leading: Icon(
-          order.kind == OrderKind.importOrder ? Icons.call_received : Icons.call_made,
-          color: orderStatusColor(order.status),
+        leading: CircleAvatar(
+          backgroundColor: orderStatusColor(order.status).withValues(alpha: 0.15),
+          child: Icon(
+            order.kind == OrderKind.importOrder ? Icons.call_received : Icons.call_made,
+            color: orderStatusColor(order.status),
+          ),
         ),
-        title: Text(order.code),
-        subtitle: Text(order.kind == OrderKind.importOrder ? 'Phiếu nhập kho' : 'Phiếu xuất kho'),
-        trailing: Text(_formatDate(order.date), style: const TextStyle(color: Colors.black54)),
+        title: Text(order.code, style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary)),
+        subtitle: Text(
+          order.kind == OrderKind.importOrder ? 'Phiếu nhập kho' : 'Phiếu xuất kho',
+          style: const TextStyle(color: AppColors.textMuted),
+        ),
+        trailing: Text(_formatDate(order.date), style: const TextStyle(color: AppColors.textMuted)),
       ),
     );
   }

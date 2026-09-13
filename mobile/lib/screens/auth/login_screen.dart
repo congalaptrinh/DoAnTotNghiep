@@ -74,7 +74,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               const Text(
                 'Đăng nhập để tiếp tục',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.black54, fontSize: 14),
+                style: TextStyle(color: AppColors.textMuted, fontSize: 14),
               ),
               const SizedBox(height: 32),
               Form(
