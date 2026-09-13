@@ -29,14 +29,14 @@
 
 ## Giai đoạn C — Trang chủ & Điều hướng
 
-- [ ] C1. Bottom navigation bar 4 tab: Trang chủ / Tồn kho / Quét AI / Lịch sử.
-- [ ] C2. Trang chủ: lời chào, vài số liệu tóm tắt dạng card lớn (tái sử dụng logic từ `useDashboardStats` bên Web nếu hợp lý), danh sách phiếu gần đây của chính người dùng đang đăng nhập.
+- [x] C1. Bottom navigation bar 4 tab: Trang chủ / Tồn kho / Quét AI / Lịch sử. **Note:** `lib/screens/home/home_shell.dart` (IndexedStack, không dùng route lồng go_router — đơn giản hơn vì không cần deep-link riêng cho từng tab). Quét AI/Lịch sử là placeholder "Sắp ra mắt" (Giai đoạn E/F chưa làm).
+- [x] C2. Trang chủ: lời chào, vài số liệu tóm tắt dạng card lớn (tái sử dụng logic từ `useDashboardStats` bên Web nếu hợp lý), danh sách phiếu gần đây của chính người dùng đang đăng nhập. **Note:** `lib/screens/home/home_screen.dart` + `lib/providers/dashboard_provider.dart` — gộp `GET /items`+`/inventory`+`/import-orders`+`/export-orders` (không có endpoint tổng hợp riêng, giống Web). "Phiếu gần đây của tôi" là tính năng mới không có bên Web (Web chỉ có stock-movements chung), lọc client-side theo `created_by`/`requested_by` == user hiện tại.
 
 ## Giai đoạn D — Tồn kho & Vật tư (đọc + tạo phiếu nhanh)
 
-- [ ] D1. Danh sách vật tư — tìm kiếm, mỗi item 1 card (tên, mã, tồn kho hiện tại), nối `GET /api/items` + `GET /api/inventory`.
-- [ ] D2. Chi tiết vật tư — tồn kho theo từng kho/vị trí, 2 nút "Tạo phiếu nhập nhanh" / "Tạo phiếu xuất nhanh".
-- [ ] D3. Form tạo phiếu nhập/xuất nhanh — tối giản: chọn kho (dropdown to), chọn vật tư (ô tìm kiếm), nhập số lượng (bàn phím số to), 1 nút xác nhận lớn. Nối `POST /api/import-orders` (+ confirm) / `POST /api/export-orders` (+ confirm) thật, xử lý đúng lỗi tồn kho không đủ.
+- [x] D1. Danh sách vật tư — tìm kiếm, mỗi item 1 card (tên, mã, tồn kho hiện tại), nối `GET /api/items` + `GET /api/inventory`. **Note:** `lib/screens/inventory/inventory_list_screen.dart`, debounce 400ms.
+- [x] D2. Chi tiết vật tư — tồn kho theo từng kho/vị trí, 2 nút "Tạo phiếu nhập nhanh" / "Tạo phiếu xuất nhanh". **Note:** `lib/screens/inventory/item_detail_screen.dart`, dùng endpoint thật `GET /api/inventory/:itemId`; 2 nút ẩn theo đúng RBAC B3 (`canWrite`).
+- [x] D3. Form tạo phiếu nhập/xuất nhanh — tối giản: chọn kho (dropdown to), chọn vật tư (ô tìm kiếm), nhập số lượng (bàn phím số to), 1 nút xác nhận lớn. Nối `POST /api/import-orders` (+ confirm) / `POST /api/export-orders` (+ confirm) thật, xử lý đúng lỗi tồn kho không đủ. **Note:** `lib/screens/inventory/quick_order_form_screen.dart`. Vật tư đã chọn sẵn từ D2 (không lặp lại ô tìm kiếm của D1). Đã verify bằng gọi API thật: tạo+xác nhận phiếu nhập tăng đúng tồn kho (0→3), tạo+xác nhận phiếu xuất vượt tồn kho trả đúng lỗi 400 "Tồn kho không đủ để xuất..." hiển thị nguyên văn lên form.
 
 ## Giai đoạn E — Luồng chụp ảnh AI (phần quan trọng nhất, độ rủi ro cao)
 

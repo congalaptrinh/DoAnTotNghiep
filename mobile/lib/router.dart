@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 
 import 'providers/auth_provider.dart';
 import 'screens/auth/login_screen.dart';
-import 'screens/home_placeholder_screen.dart';
+import 'screens/home/home_shell.dart';
 
 /// Router phụ thuộc trực tiếp vào authProvider — mỗi khi trạng thái đăng nhập
 /// đổi (login/logout/401 tự động), Provider này rebuild -> GoRouter mới ->
@@ -27,7 +27,7 @@ final goRouterProvider = Provider<GoRouter>((ref) {
     },
     routes: [
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
-      GoRoute(path: '/home', builder: (context, state) => const HomePlaceholderScreen()),
+      GoRoute(path: '/home', builder: (context, state) => const HomeShell()),
     ],
   );
 });
