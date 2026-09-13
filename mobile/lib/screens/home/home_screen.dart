@@ -57,7 +57,6 @@ class HomeScreen extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.sectionGap),
               Row(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Expanded(
                     child: _StatCard(icon: Icons.inventory_2, label: 'Vật tư', value: stats.totalItems, color: AppColors.info),

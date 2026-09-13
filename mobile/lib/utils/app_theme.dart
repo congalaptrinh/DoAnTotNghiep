@@ -167,14 +167,35 @@ Color orderStatusColor(String status) {
 
 /// AppBar dùng gradient thương hiệu — DÙNG Ở MỌI MÀN HÌNH thay vì `AppBar()`
 /// thường, để khớp đúng ý định đã ghi ở A3 (gradient áp cho AppBar, không chỉ
-/// nút bấm/màn Đăng nhập). `ThemeData.appBarTheme` không nhận `Gradient` cho
-/// `backgroundColor` nên phải làm trong suốt + vẽ gradient qua `flexibleSpace`.
-AppBar buildBrandAppBar(String title, {List<Widget>? actions}) {
-  return AppBar(
-    title: Text(title),
-    backgroundColor: Colors.transparent,
-    foregroundColor: Colors.white,
-    flexibleSpace: const DecoratedBox(decoration: BoxDecoration(gradient: AppColors.brandGradient)),
-    actions: actions,
+/// nút bấm/màn Đăng nhập).
+///
+/// LƯU Ý (đã đổi cách làm sau khi phát hiện lỗi thật trên thiết bị): cách cũ
+/// dùng `AppBar(backgroundColor: transparent, flexibleSpace: DecoratedBox(...))`
+/// KHÔNG hiển thị gradient trên Material 3 thật — đo màu pixel thực tế trên
+/// ảnh chụp màn hình cho ra `#ECECF3` (gần trắng) thay vì gradient, khiến chữ
+/// trắng gần như vô hình. Cách chắc chắn hơn: bọc `Container` có gradient BÊN
+/// NGOÀI `AppBar` (không phụ thuộc `flexibleSpace`/Material3 tint nội bộ nữa).
+/// `titleTextStyle` đặt tường minh (không dựa vào suy luận `foregroundColor`
+/// qua theme) + `shadows` nhẹ để chắc chắn đọc được dù nền gradient sáng/tối.
+PreferredSizeWidget buildBrandAppBar(String title, {List<Widget>? actions}) {
+  return PreferredSize(
+    preferredSize: const Size.fromHeight(kToolbarHeight),
+    child: Container(
+      decoration: const BoxDecoration(gradient: AppColors.brandGradient),
+      child: AppBar(
+        title: Text(
+          title,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w700,
+            shadows: [Shadow(color: Colors.black26, blurRadius: 2, offset: Offset(0, 1))],
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        actions: actions,
+      ),
+    ),
   );
 }
