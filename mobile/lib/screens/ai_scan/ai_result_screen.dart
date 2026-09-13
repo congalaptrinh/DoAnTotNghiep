@@ -27,14 +27,18 @@ class _LabelRow {
   String? locationId;
 
   _LabelRow({required this.className, required this.detectedCount})
-      : quantity = detectedCount;
+    : quantity = detectedCount;
 }
 
 class AiResultScreen extends StatefulWidget {
   final String imagePath;
   final AiDetectResult result;
 
-  const AiResultScreen({super.key, required this.imagePath, required this.result});
+  const AiResultScreen({
+    super.key,
+    required this.imagePath,
+    required this.result,
+  });
 
   @override
   State<AiResultScreen> createState() => _AiResultScreenState();
@@ -56,18 +60,25 @@ class _AiResultScreenState extends State<AiResultScreen> {
   @override
   void initState() {
     super.initState();
-    _rows = widget.result.summary.map((s) => _LabelRow(className: s.className, detectedCount: s.count)).toList();
+    _rows = widget.result.summary
+        .map((s) => _LabelRow(className: s.className, detectedCount: s.count))
+        .toList();
     _imageBytes = _decodeDataUri(widget.result.annotatedImage);
     _loadInitialData();
   }
 
   Uint8List _decodeDataUri(String dataUri) {
     final commaIndex = dataUri.indexOf(',');
-    return base64Decode(commaIndex == -1 ? dataUri : dataUri.substring(commaIndex + 1));
+    return base64Decode(
+      commaIndex == -1 ? dataUri : dataUri.substring(commaIndex + 1),
+    );
   }
 
   Future<void> _loadInitialData() async {
-    final (warehouses, items) = await (WarehouseService.instance.listActive(), ItemService.instance.list()).wait;
+    final (warehouses, items) = await (
+      WarehouseService.instance.listActive(),
+      ItemService.instance.list(),
+    ).wait;
     if (!mounted) return;
     setState(() {
       _warehouses = warehouses;
@@ -96,8 +107,13 @@ class _AiResultScreenState extends State<AiResultScreen> {
 
   Future<void> _submit() async {
     final activeRows = _rows.where((r) => r.quantity > 0).toList();
-    if (_warehouseId == null || activeRows.isEmpty || activeRows.any((r) => r.itemId == null || r.locationId == null)) {
-      setState(() => _error = 'Chọn kho + đủ vật tư/vị trí cho mọi nhãn còn số lượng > 0');
+    if (_warehouseId == null ||
+        activeRows.isEmpty ||
+        activeRows.any((r) => r.itemId == null || r.locationId == null)) {
+      setState(
+        () => _error =
+            'Chọn kho + đủ vật tư/vị trí cho mọi nhãn còn số lượng > 0',
+      );
       return;
     }
 
@@ -109,7 +125,13 @@ class _AiResultScreenState extends State<AiResultScreen> {
       await OrderService.instance.createFromAi(
         warehouseId: _warehouseId!,
         items: activeRows
-            .map((r) => QuickOrderItem(itemId: r.itemId!, locationId: r.locationId!, quantity: r.quantity))
+            .map(
+              (r) => QuickOrderItem(
+                itemId: r.itemId!,
+                locationId: r.locationId!,
+                quantity: r.quantity,
+              ),
+            )
             .toList(),
       );
       if (!mounted) return;
@@ -129,18 +151,31 @@ class _AiResultScreenState extends State<AiResultScreen> {
           ? const Center(child: CircularProgressIndicator())
           : Column(
               children: [
-                _BoundingBoxImage(imageBytes: _imageBytes, detections: widget.result.detections),
+                _BoundingBoxImage(
+                  imageBytes: _imageBytes,
+                  detections: widget.result.detections,
+                ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   child: DropdownButtonFormField<String>(
                     initialValue: _warehouseId,
                     decoration: const InputDecoration(labelText: 'Kho nhập'),
-                    items: _warehouses.map((w) => DropdownMenuItem(value: w.warehouseId, child: Text(w.warehouseName))).toList(),
+                    items: _warehouses
+                        .map(
+                          (w) => DropdownMenuItem(
+                            value: w.warehouseId,
+                            child: Text(w.warehouseName),
+                          ),
+                        )
+                        .toList(),
                     onChanged: _onWarehouseChanged,
                   ),
                 ),
                 SizedBox(
-                  height: 190,
+                  height: 230,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -158,7 +193,10 @@ class _AiResultScreenState extends State<AiResultScreen> {
                 if (_error != null)
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(_error!, style: const TextStyle(color: AppColors.danger)),
+                    child: Text(
+                      _error!,
+                      style: const TextStyle(color: AppColors.danger),
+                    ),
                   ),
                 Padding(
                   padding: const EdgeInsets.all(16),
@@ -167,7 +205,14 @@ class _AiResultScreenState extends State<AiResultScreen> {
                     child: ElevatedButton(
                       onPressed: _submitting ? null : _submit,
                       child: _submitting
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                color: Colors.white,
+                              ),
+                            )
                           : const Text('Xác nhận tạo phiếu nhập'),
                     ),
                   ),
@@ -200,7 +245,9 @@ class _LabelCard extends StatefulWidget {
 }
 
 class _LabelCardState extends State<_LabelCard> {
-  late final _qtyController = TextEditingController(text: '${widget.row.quantity}');
+  late final _qtyController = TextEditingController(
+    text: '${widget.row.quantity}',
+  );
 
   @override
   void dispose() {
@@ -216,50 +263,83 @@ class _LabelCardState extends State<_LabelCard> {
       child: Container(
         width: 220,
         padding: const EdgeInsets.all(10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(row.className, style: const TextStyle(fontWeight: FontWeight.bold)),
-            Text('AI nhận diện: ${row.detectedCount}', style: const TextStyle(fontSize: 11, color: Colors.black45)),
-            const SizedBox(height: 6),
-            TextField(
-              controller: _qtyController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: 'Số lượng', isDense: true),
-              onChanged: (v) {
-                row.quantity = int.tryParse(v) ?? 0;
-                widget.onChanged();
-              },
-            ),
-            const SizedBox(height: 6),
-            DropdownButtonFormField<String>(
-              initialValue: row.itemId,
-              isExpanded: true,
-              decoration: const InputDecoration(labelText: 'Vật tư', isDense: true),
-              items: widget.items
-                  .map((it) => DropdownMenuItem(value: it.itemId, child: Text(it.itemName, overflow: TextOverflow.ellipsis)))
-                  .toList(),
-              onChanged: (v) {
-                row.itemId = v;
-                widget.onChanged();
-              },
-            ),
-            const SizedBox(height: 6),
-            DropdownButtonFormField<String>(
-              initialValue: row.locationId,
-              isExpanded: true,
-              decoration: const InputDecoration(labelText: 'Vị trí', isDense: true),
-              items: widget.locations
-                  .map((l) => DropdownMenuItem(value: l.locationId, child: Text(l.locationCode)))
-                  .toList(),
-              onChanged: widget.warehouseSelected
-                  ? (v) {
-                      row.locationId = v;
-                      widget.onChanged();
-                    }
-                  : null,
-            ),
-          ],
+        // Cuộn bên trong thẻ thay vì overflow cứng — tên vật tư/vị trí dài
+        // hoặc cỡ chữ hệ thống lớn (đã gặp thật trên điện thoại: tràn 48px)
+        // không còn làm vỡ layout, chỉ cần vuốt thêm trong thẻ.
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                row.className,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+              Text(
+                'AI nhận diện: ${row.detectedCount}',
+                style: const TextStyle(fontSize: 11, color: Colors.black45),
+              ),
+              const SizedBox(height: 6),
+              TextField(
+                controller: _qtyController,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Số lượng',
+                  isDense: true,
+                ),
+                onChanged: (v) {
+                  row.quantity = int.tryParse(v) ?? 0;
+                  widget.onChanged();
+                },
+              ),
+              const SizedBox(height: 6),
+              DropdownButtonFormField<String>(
+                initialValue: row.itemId,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: 'Vật tư',
+                  isDense: true,
+                ),
+                items: widget.items
+                    .map(
+                      (it) => DropdownMenuItem(
+                        value: it.itemId,
+                        child: Text(
+                          it.itemName,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (v) {
+                  row.itemId = v;
+                  widget.onChanged();
+                },
+              ),
+              const SizedBox(height: 6),
+              DropdownButtonFormField<String>(
+                initialValue: row.locationId,
+                isExpanded: true,
+                decoration: const InputDecoration(
+                  labelText: 'Vị trí',
+                  isDense: true,
+                ),
+                items: widget.locations
+                    .map(
+                      (l) => DropdownMenuItem(
+                        value: l.locationId,
+                        child: Text(l.locationCode),
+                      ),
+                    )
+                    .toList(),
+                onChanged: widget.warehouseSelected
+                    ? (v) {
+                        row.locationId = v;
+                        widget.onChanged();
+                      }
+                    : null,
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -297,7 +377,10 @@ class _BoundingBoxImageState extends State<_BoundingBoxImage> {
       builder: (context, snapshot) {
         final img = snapshot.data;
         if (img == null) {
-          return const SizedBox(height: 250, child: Center(child: CircularProgressIndicator()));
+          return const SizedBox(
+            height: 250,
+            child: Center(child: CircularProgressIndicator()),
+          );
         }
 
         return AspectRatio(
@@ -317,14 +400,22 @@ class _BoundingBoxImageState extends State<_BoundingBoxImage> {
                       width: d.boundingBox.width * scaleX,
                       height: d.boundingBox.height * scaleY,
                       child: Container(
-                        decoration: BoxDecoration(border: Border.all(color: AppColors.danger, width: 2)),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: AppColors.danger, width: 2),
+                        ),
                         alignment: Alignment.topLeft,
                         child: Container(
                           color: AppColors.danger,
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 4,
+                            vertical: 1,
+                          ),
                           child: Text(
                             '${d.className} ${(d.confidence * 100).round()}%',
-                            style: const TextStyle(color: Colors.white, fontSize: 10),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                            ),
                           ),
                         ),
                       ),
