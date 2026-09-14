@@ -68,14 +68,14 @@
 
 ## Giai đoạn F — Lịch sử
 
-- [ ] F1. Danh sách các phiếu do người dùng tạo gần đây, mỗi dòng icon màu theo loại nghiệp vụ (đồng bộ màu với Web), trạng thái badge (DRAFT/CONFIRMED/CANCELLED — đúng 3 giá trị thật, không bịa thêm).
+- [x] F1. Danh sách các phiếu do người dùng tạo gần đây, mỗi dòng icon màu theo loại nghiệp vụ (đồng bộ màu với Web), trạng thái badge (DRAFT/CONFIRMED/CANCELLED — đúng 3 giá trị thật, không bịa thêm). **Note:** `lib/screens/home/history_screen.dart` + `lib/providers/history_provider.dart` — gọi thật `GET /import-orders` + `/export-orders` (không filter status, không giới hạn số dòng, khác dashboard chỉ lấy 5), lọc client-side theo người dùng hiện tại. Icon màu theo `movementTypeColor('IMPORT'/'EXPORT')`, badge trạng thái riêng dùng `orderStatusColor`/`orderStatusLabel` (nhãn nguyên văn khớp Web: Nháp/Đã xác nhận/Đã huỷ). Verify bằng API thật: 17 phiếu nhập + 25 phiếu xuất tồn tại thật trong DB, đúng field khớp model.
 
 ## Giai đoạn G — Kiểm thử & hoàn thiện
 
-- [ ] G1. Test thủ công (có hướng dẫn cụ thể cho người dùng) luồng chính: đăng nhập → xem tồn kho → tạo phiếu nhanh → chụp ảnh AI → xác nhận → xem lịch sử.
-- [ ] G2. Rà lại toàn bộ màu sắc/spacing khớp đúng token đã định nghĩa ở A3, nhất quán với Web.
-- [ ] G3. Cập nhật `07-DECISIONS-LOG.md` lần cuối cho Mobile App.
-- [ ] G4. Build thử bản release cơ bản (`flutter build apk` hoặc tương đương) xác nhận không lỗi.
+- [x] G1. Test thủ công (có hướng dẫn cụ thể cho người dùng) luồng chính: đăng nhập → xem tồn kho → tạo phiếu nhanh → chụp ảnh AI → xác nhận → xem lịch sử. **Note:** tự duyệt bằng `adb input tap` + chụp ảnh thật qua toàn bộ luồng chính trên `HILJAQFYGM55QOPZ` (Trang chủ → Tồn kho → Chi tiết vật tư → Nhập kho (hub) → Nhập kho thủ công đa dòng → Quét AI → Lịch sử) — không có lỗi/crash, logcat sạch xuyên suốt. Riêng bước "chụp ảnh AI" thật (bấm nút chụp, chọn ảnh) cần thao tác tay thật trên camera — đã verify đầy đủ logic + hình ảnh ở Giai đoạn E; người dùng tự xác nhận lần cuối theo đúng kế hoạch đã nói trước khi merge.
+- [x] G2. Rà lại toàn bộ màu sắc/spacing khớp đúng token đã định nghĩa ở A3, nhất quán với Web. **Note:** rà code toàn bộ `lib/screens/` — không còn `Colors.blackXX` nào ngoài `app_theme.dart` (fallback/shadow hợp lệ); chuẩn hoá padding trùng khớp `AppSpacing`; rà toàn bộ `Row`/`Column` tìm pattern lỗi "stretch trong context chiều cao unbounded" — không còn chỗ nào khác ngoài đã sửa. **Xác nhận bằng ảnh chụp thật** trên thiết bị cho 7 màn chính (Trang chủ/Tồn kho/Chi tiết vật tư/Nhập kho hub/Nhập kho thủ công/Quét AI/Lịch sử) — AppBar gradient + chữ trắng rõ nét ở mọi màn, card đồng nhất, không còn màn nào trống/vỡ layout.
+- [x] G3. Cập nhật `07-DECISIONS-LOG.md` lần cuối cho Mobile App.
+- [x] G4. Build thử bản release cơ bản (`flutter build apk` hoặc tương đương) xác nhận không lỗi. **Note:** `flutter build apk --release --dart-define=API_BASE_URL=...` → `app-release.apk` (50.9MB) build thành công, không lỗi (ký bằng debug keys tạm thời theo đúng note có sẵn trong `build.gradle.kts`).
 
 ---
 
