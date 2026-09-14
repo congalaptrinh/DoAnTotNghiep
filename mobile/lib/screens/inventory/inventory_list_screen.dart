@@ -47,6 +47,17 @@ class _InventoryListScreenState extends ConsumerState<InventoryListScreen> {
             ),
             child: TextField(
               onChanged: _onSearchChanged,
+              // `keyboardType: visiblePassword` tắt hẳn chế độ gõ có dấu (bộ gõ
+              // Telex tiếng Việt, ví dụ LabanKey) — nếu không tắt, gõ liên tiếp
+              // "S" ngay sau nguyên âm (rất hay gặp trong mã vật tư kiểu
+              // "TEST-..." ) sẽ bị bộ gõ ghép thành dấu sắc ("TEST" ->
+              // "TÉT"), khiến chuỗi gửi lên Backend sai lệch và không khớp được
+              // item_code thật — đây là nguyên nhân gốc bug "tìm theo tên được,
+              // tìm theo mã thì không", xác nhận bằng test gõ trực tiếp trên
+              // thiết bị thật (IME đang dùng: LabanKey Telex).
+              keyboardType: TextInputType.visiblePassword,
+              autocorrect: false,
+              enableSuggestions: false,
               decoration: const InputDecoration(
                 prefixIcon: Icon(Icons.search, color: AppColors.textMuted),
                 hintText: 'Tìm theo tên hoặc mã vật tư',
