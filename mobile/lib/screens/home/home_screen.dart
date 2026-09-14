@@ -86,7 +86,7 @@ class HomeScreen extends ConsumerWidget {
               const SizedBox(height: AppSpacing.itemGap),
               if (stats.recentOrders.isEmpty)
                 Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: const EdgeInsets.symmetric(vertical: AppSpacing.itemGap),
                   child: Text('Chưa có phiếu nào', style: TextStyle(color: AppColors.textMuted)),
                 )
               else

@@ -165,6 +165,21 @@ Color orderStatusColor(String status) {
   }
 }
 
+/// Nhãn badge — nguyên văn khớp Web (`ImportPage.tsx`/`ExportPage.tsx`
+/// `STATUS_LABEL`), không tự dịch khác đi.
+String orderStatusLabel(String status) {
+  switch (status) {
+    case 'DRAFT':
+      return 'Nháp';
+    case 'CONFIRMED':
+      return 'Đã xác nhận';
+    case 'CANCELLED':
+      return 'Đã huỷ';
+    default:
+      return status;
+  }
+}
+
 /// AppBar dùng gradient thương hiệu — DÙNG Ở MỌI MÀN HÌNH thay vì `AppBar()`
 /// thường, để khớp đúng ý định đã ghi ở A3 (gradient áp cho AppBar, không chỉ
 /// nút bấm/màn Đăng nhập).

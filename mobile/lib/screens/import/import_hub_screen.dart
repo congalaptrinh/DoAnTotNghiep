@@ -33,7 +33,7 @@ class ImportHubScreen extends ConsumerWidget {
             const SizedBox(height: AppSpacing.itemGap),
             if (!canImport && !canAiDetect)
               const Padding(
-                padding: EdgeInsets.symmetric(vertical: 24),
+                padding: EdgeInsets.symmetric(vertical: AppSpacing.sectionGap),
                 child: Text(
                   'Bạn không có quyền tạo phiếu nhập kho.',
                   style: TextStyle(color: AppColors.textMuted),

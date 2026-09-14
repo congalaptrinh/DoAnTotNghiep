@@ -72,7 +72,7 @@ class _AiScanScreenState extends ConsumerState<AiScanScreen> {
       appBar: buildBrandAppBar('Quét AI'),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(AppSpacing.sectionGap),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

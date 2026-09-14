@@ -178,7 +178,7 @@ class _AiResultScreenState extends State<AiResultScreen> {
                   height: 230,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.itemGap),
                     itemCount: _rows.length,
                     itemBuilder: (context, i) => _LabelCard(
                       row: _rows[i],
@@ -192,14 +192,14 @@ class _AiResultScreenState extends State<AiResultScreen> {
                 ),
                 if (_error != null)
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: AppSpacing.screenPadding),
                     child: Text(
                       _error!,
                       style: const TextStyle(color: AppColors.danger),
                     ),
                   ),
                 Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(AppSpacing.screenPadding),
                   child: SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../import/import_hub_screen.dart';
 import '../inventory/inventory_list_screen.dart';
-import 'history_placeholder_screen.dart';
+import 'history_screen.dart';
 import 'home_screen.dart';
 
 /// Bottom Navigation 4 tab (C1) — thay thế hoàn toàn `HomePlaceholderScreen`
@@ -24,7 +24,7 @@ class _HomeShellState extends State<HomeShell> {
     HomeScreen(),
     InventoryListScreen(),
     ImportHubScreen(),
-    HistoryPlaceholderScreen(),
+    HistoryScreen(),
   ];
 
   @override
