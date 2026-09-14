@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/item.dart';
 import '../../models/order_summary.dart';
 import '../../models/storage_location.dart';
 import '../../models/warehouse.dart';
+import '../../providers/dashboard_provider.dart';
+import '../../providers/history_provider.dart';
+import '../../providers/inventory_providers.dart';
 import '../../services/api_client.dart';
 import '../../services/order_service.dart';
 import '../../services/storage_location_service.dart';
@@ -15,17 +19,17 @@ import '../../utils/app_theme.dart';
 /// xác nhận lớn, đúng tinh thần "nhân viên kho thao tác nhanh tại hiện trường".
 /// Nhập kho đa dòng (nhiều vật tư/phiếu) dùng màn hình riêng
 /// `screens/import/manual_import_screen.dart`, không dùng form này.
-class QuickOrderFormScreen extends StatefulWidget {
+class QuickOrderFormScreen extends ConsumerStatefulWidget {
   final Item item;
   final OrderKind kind;
 
   const QuickOrderFormScreen({super.key, required this.item, required this.kind});
 
   @override
-  State<QuickOrderFormScreen> createState() => _QuickOrderFormScreenState();
+  ConsumerState<QuickOrderFormScreen> createState() => _QuickOrderFormScreenState();
 }
 
-class _QuickOrderFormScreenState extends State<QuickOrderFormScreen> {
+class _QuickOrderFormScreenState extends ConsumerState<QuickOrderFormScreen> {
   final _formKey = GlobalKey<FormState>();
   final _qtyController = TextEditingController();
 
@@ -100,6 +104,14 @@ class _QuickOrderFormScreenState extends State<QuickOrderFormScreen> {
         await OrderService.instance.createExportAndConfirm(warehouseId: _warehouseId!, items: [quickItem]);
       }
       if (!mounted) return;
+      // Invalidate MỌI provider hiển thị tồn kho/số liệu bị ảnh hưởng — nguyên
+      // nhân gốc bug "Chi tiết vật tư không cập nhật sau khi tạo phiếu": các
+      // provider này (FutureProvider) mặc định được cache vô thời hạn, không
+      // tự fetch lại chỉ vì có 1 lời gọi API mutation xảy ra ở nơi khác.
+      ref.invalidate(itemInventoryProvider(widget.item.itemId));
+      ref.invalidate(itemsWithStockProvider);
+      ref.invalidate(dashboardStatsProvider);
+      ref.invalidate(historyProvider);
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Đã tạo phiếu ${_isImport ? "nhập" : "xuất"} kho thành công')),
       );

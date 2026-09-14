@@ -40,41 +40,53 @@ class ItemDetailScreen extends ConsumerWidget {
           ),
           const Divider(height: 1),
           Expanded(
-            child: rowsAsync.when(
-              data: (rows) => rows.isEmpty
-                  ? const Center(
-                      child: Text('Chưa có tồn kho tại kho/vị trí nào', style: TextStyle(color: AppColors.textMuted)),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(vertical: AppSpacing.tightGap),
-                      itemCount: rows.length,
-                      itemBuilder: (context, i) {
-                        final r = rows[i];
-                        return Card(
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: AppSpacing.screenPadding,
-                            vertical: AppSpacing.tightGap,
-                          ),
-                          child: ListTile(
-                            leading: const Icon(Icons.warehouse_outlined, color: AppColors.brandFrom),
-                            title: Text(
-                              r.warehouse?.warehouseName ?? r.warehouseId,
-                              style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
-                            ),
-                            subtitle: Text(
-                              'Vị trí: ${r.location?.locationCode ?? r.locationId}',
-                              style: const TextStyle(color: AppColors.textMuted),
-                            ),
-                            trailing: Text(
-                              '${r.availableQuantity}',
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textPrimary),
+            child: RefreshIndicator(
+              // Kéo để làm mới — bắt buộc có vì tồn kho có thể đổi từ nơi khác
+              // (Web, luồng AI, Nhập kho thủ công) trong lúc đang đứng ở màn này.
+              onRefresh: () => ref.refresh(itemInventoryProvider(item.itemId).future),
+              child: rowsAsync.when(
+                data: (rows) => rows.isEmpty
+                    ? ListView(
+                        children: const [
+                          Padding(
+                            padding: EdgeInsets.only(top: 80),
+                            child: Center(
+                              child: Text('Chưa có tồn kho tại kho/vị trí nào', style: TextStyle(color: AppColors.textMuted)),
                             ),
                           ),
-                        );
-                      },
-                    ),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('Lỗi tải dữ liệu: $e', style: const TextStyle(color: AppColors.danger))),
+                        ],
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(vertical: AppSpacing.tightGap),
+                        itemCount: rows.length,
+                        itemBuilder: (context, i) {
+                          final r = rows[i];
+                          return Card(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: AppSpacing.screenPadding,
+                              vertical: AppSpacing.tightGap,
+                            ),
+                            child: ListTile(
+                              leading: const Icon(Icons.warehouse_outlined, color: AppColors.brandFrom),
+                              title: Text(
+                                r.warehouse?.warehouseName ?? r.warehouseId,
+                                style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.textPrimary),
+                              ),
+                              subtitle: Text(
+                                'Vị trí: ${r.location?.locationCode ?? r.locationId}',
+                                style: const TextStyle(color: AppColors.textMuted),
+                              ),
+                              trailing: Text(
+                                '${r.availableQuantity}',
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: AppColors.textPrimary),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                loading: () => const Center(child: CircularProgressIndicator()),
+                error: (e, _) => Center(child: Text('Lỗi tải dữ liệu: $e', style: const TextStyle(color: AppColors.danger))),
+              ),
             ),
           ),
           if (canImport || canExport)
@@ -90,7 +102,7 @@ class ItemDetailScreen extends ConsumerWidget {
                     Expanded(
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(backgroundColor: AppColors.info),
-                        onPressed: () => _openQuickOrder(context, OrderKind.importOrder),
+                        onPressed: () => _openQuickOrder(context, ref, OrderKind.importOrder),
                         icon: const Icon(Icons.call_received, size: 18),
                         label: const Text('Nhập nhanh'),
                       ),
@@ -100,7 +112,7 @@ class ItemDetailScreen extends ConsumerWidget {
                     Expanded(
                       child: ElevatedButton.icon(
                         style: ElevatedButton.styleFrom(backgroundColor: AppColors.accent),
-                        onPressed: () => _openQuickOrder(context, OrderKind.exportOrder),
+                        onPressed: () => _openQuickOrder(context, ref, OrderKind.exportOrder),
                         icon: const Icon(Icons.call_made, size: 18),
                         label: const Text('Xuất nhanh'),
                       ),
@@ -113,9 +125,16 @@ class ItemDetailScreen extends ConsumerWidget {
     );
   }
 
-  void _openQuickOrder(BuildContext context, OrderKind kind) {
-    Navigator.of(context).push(
+  Future<void> _openQuickOrder(BuildContext context, WidgetRef ref, OrderKind kind) async {
+    final created = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => QuickOrderFormScreen(item: item, kind: kind)),
     );
+    // Phòng hờ — QuickOrderFormScreen tự invalidate provider của chính nó khi
+    // tạo thành công, nhưng invalidate lại đây (không hại gì, đã autoDispose)
+    // để chắc chắn màn Chi tiết vật tư luôn mới ngay khi quay lại, kể cả nếu
+    // sau này có đường tạo phiếu nào khác quên gọi invalidate.
+    if (created == true) {
+      ref.invalidate(itemInventoryProvider(item.itemId));
+    }
   }
 }

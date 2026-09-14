@@ -3,11 +3,15 @@ import 'dart:typed_data';
 import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/ai_detect_result.dart';
 import '../../models/item.dart';
 import '../../models/storage_location.dart';
 import '../../models/warehouse.dart';
+import '../../providers/dashboard_provider.dart';
+import '../../providers/history_provider.dart';
+import '../../providers/inventory_providers.dart';
 import '../../services/api_client.dart';
 import '../../services/item_service.dart';
 import '../../services/order_service.dart';
@@ -30,7 +34,7 @@ class _LabelRow {
     : quantity = detectedCount;
 }
 
-class AiResultScreen extends StatefulWidget {
+class AiResultScreen extends ConsumerStatefulWidget {
   final String imagePath;
   final AiDetectResult result;
 
@@ -41,10 +45,10 @@ class AiResultScreen extends StatefulWidget {
   });
 
   @override
-  State<AiResultScreen> createState() => _AiResultScreenState();
+  ConsumerState<AiResultScreen> createState() => _AiResultScreenState();
 }
 
-class _AiResultScreenState extends State<AiResultScreen> {
+class _AiResultScreenState extends ConsumerState<AiResultScreen> {
   late final List<_LabelRow> _rows;
   late final Uint8List _imageBytes;
 
@@ -135,6 +139,12 @@ class _AiResultScreenState extends State<AiResultScreen> {
             .toList(),
       );
       if (!mounted) return;
+      for (final r in activeRows) {
+        ref.invalidate(itemInventoryProvider(r.itemId!));
+      }
+      ref.invalidate(itemsWithStockProvider);
+      ref.invalidate(dashboardStatsProvider);
+      ref.invalidate(historyProvider);
       Navigator.of(context).pop(true);
     } on ApiException catch (e) {
       setState(() => _error = e.message);

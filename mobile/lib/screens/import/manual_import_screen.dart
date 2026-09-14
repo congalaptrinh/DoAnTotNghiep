@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/item.dart';
 import '../../models/storage_location.dart';
 import '../../models/warehouse.dart';
+import '../../providers/dashboard_provider.dart';
+import '../../providers/history_provider.dart';
+import '../../providers/inventory_providers.dart';
 import '../../services/api_client.dart';
 import '../../services/item_service.dart';
 import '../../services/order_service.dart';
@@ -25,14 +29,14 @@ class _ManualRow {
 /// xem quyết định trong 07-DECISIONS-LOG.md. Submit = tạo (DRAFT) + xác nhận
 /// ngay 2 lời gọi tuần tự, dùng chung `OrderService.createImportAndConfirm`
 /// với D3 (chỉ khác số dòng gửi lên).
-class ManualImportScreen extends StatefulWidget {
+class ManualImportScreen extends ConsumerStatefulWidget {
   const ManualImportScreen({super.key});
 
   @override
-  State<ManualImportScreen> createState() => _ManualImportScreenState();
+  ConsumerState<ManualImportScreen> createState() => _ManualImportScreenState();
 }
 
-class _ManualImportScreenState extends State<ManualImportScreen> {
+class _ManualImportScreenState extends ConsumerState<ManualImportScreen> {
   final List<_ManualRow> _rows = [_ManualRow()];
 
   List<Warehouse> _warehouses = [];
@@ -116,6 +120,14 @@ class _ManualImportScreenState extends State<ManualImportScreen> {
     try {
       await OrderService.instance.createImportAndConfirm(warehouseId: _warehouseId!, items: items);
       if (!mounted) return;
+      // Nhiều vật tư trong 1 phiếu — invalidate riêng từng item (nếu đang có
+      // ai đó mở sẵn Chi tiết vật tư của đúng item này) + các provider tổng.
+      for (final it in items) {
+        ref.invalidate(itemInventoryProvider(it.itemId));
+      }
+      ref.invalidate(itemsWithStockProvider);
+      ref.invalidate(dashboardStatsProvider);
+      ref.invalidate(historyProvider);
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Đã tạo phiếu nhập kho thành công')),
       );

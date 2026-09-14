@@ -74,7 +74,7 @@ class HomeScreen extends ConsumerWidget {
                   Expanded(
                     child: _StatCard(
                       icon: Icons.pending_actions,
-                      label: 'Phiếu chờ xác nhận',
+                      label: 'Phiếu nhập/xuất chờ xác nhận',
                       value: stats.pendingOrdersCount,
                       color: AppColors.brandFrom,
                     ),

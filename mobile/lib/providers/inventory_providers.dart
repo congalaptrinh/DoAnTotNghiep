@@ -25,7 +25,19 @@ final itemsWithStockProvider = FutureProvider<List<(Item, num)>>((ref) async {
   return [for (final item in items) (item, stockByItem[item.itemId] ?? 0)];
 });
 
-/// Tồn kho theo kho/vị trí của 1 item (D2).
-final itemInventoryProvider = FutureProvider.family<List<InventoryRow>, String>((ref, itemId) {
+/// Tồn kho theo kho/vị trí của 1 item (D2). `autoDispose` — KHÔNG được cache
+/// vô thời hạn như trước (đó là nguyên nhân bug "Chi tiết vật tư không cập
+/// nhật sau khi nhập/xuất": `FutureProvider.family` thường sống mãi trong
+/// `ProviderContainer` bất kể widget nào đang mở/đóng màn, nên quay lại 1
+/// item đã từng xem sẽ luôn thấy DATA CŨ, không tự fetch lại — vào lần đầu
+/// xem 1 item khác nhau lại đúng chỉ vì đó là lần fetch ĐẦU TIÊN cho itemId
+/// đó). `autoDispose` khiến provider bị huỷ ngay khi không còn màn nào theo
+/// dõi (rời màn Chi tiết vật tư) — lần mở lại SAU (kể cả cùng item) luôn
+/// fetch mới. Ngoài ra nơi tạo phiếu (`quick_order_form_screen.dart`,
+/// `manual_import_screen.dart`, `ai_result_screen.dart`) chủ động
+/// `ref.invalidate()` đúng itemId ngay sau khi tạo thành công — xử lý case
+/// người dùng KHÔNG rời màn (tạo phiếu ngay tại Chi tiết vật tư rồi quay lại
+/// đúng instance màn cũ, autoDispose không giúp được vì màn chưa từng đóng).
+final itemInventoryProvider = FutureProvider.family.autoDispose<List<InventoryRow>, String>((ref, itemId) {
   return InventoryService.instance.forItem(itemId);
 });
