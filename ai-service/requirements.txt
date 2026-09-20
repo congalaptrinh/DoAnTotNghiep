@@ -1,0 +1,30 @@
+# QUAN TRONG: model `models/best.pt` duoc huan luyen bang ma nguon fork
+# SkalskiP/yolov9 (KHONG phai package pip `ultralytics`) — checkpoint luu
+# thang class Python `models.yolo.DetectionModel` cua repo do, package
+# `ultralytics` (yolov8/v9 tich hop san) KHONG doc duoc file nay (da test,
+# loi "NOT forwards compatible"). Vi vay ta vendor code goc vao
+# `yolov9_src/` (xem 07-DECISIONS-LOG.md) va dung thang code do de load +
+# infer, khong dung package `ultralytics`.
+
+fastapi
+uvicorn[standard]
+python-multipart
+
+# --- infra chung ---
+opencv-python
+pillow
+numpy
+
+# --- yeu cau boi ma nguon yolov9_src/ (models/common.py, utils/*) ---
+torch
+torchvision
+pandas
+seaborn
+tqdm
+ipython
+scipy
+pyyaml
+requests
+matplotlib
+psutil
+setuptools<81  # >=81 bo pkg_resources, yolov9_src/utils/general.py can module nay
