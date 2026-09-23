@@ -1,0 +1,63 @@
+C:\Users\dell\Documents\DoAnTotNghiep\ai-service\yolov9_src\utils\general.py:29: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources as pkg
+Dang load model CU (best_v1_2071img.pt, 2071 anh)...
+YOLOv5  2026-9-20 Python-3.11.9 torch-2.14.0+cpu CPU
+
+Fusing layers... 
+yolov9-c summary: 724 layers, 51097230 parameters, 0 gradients
+Dang load model MOI (best.pt, ~13k anh)...
+YOLOv5  2026-9-20 Python-3.11.9 torch-2.14.0+cpu CPU
+
+Fusing layers... 
+Model summary: 724 layers, 51097230 parameters, 0 gradients
+
+=== ANH THAT NGOAI DATASET (Wikimedia + anh trang) ===
+
+--- resistors_multi.jpg ---
+  CU : 1 detection: 1-5-Volt-Battery x1 (conf cao nhat 0.27)
+  MOI: 1 detection: Fuse x1 (conf cao nhat 0.52)
+
+--- ic_multi.jpg ---
+  CU : 9 detection: IGBT x7 (conf cao nhat 0.86), Soil-Moisture-Sensor x1 (conf cao nhat 0.44), Arduino-Uno x1 (conf cao nhat 0.49)
+  MOI: 2 detection: IGBT x2 (conf cao nhat 0.58)
+
+--- blank.jpg ---
+  CU : 1 detection: Breadboard x1 (conf cao nhat 0.38)
+  MOI: 1 detection: Tact-Switch x1 (conf cao nhat 0.44)
+
+=== ANH THAT TU valid/ CUA ElectroCom61 (co nhan that de tinh %) ===
+
+--- IMG20240228122809_jpg.rf.bb184f37aa98d96f1db1ac5492b4c81c.jpg (GT=16) ---
+  CU : dung=15 sai-lop=0 bo-sot=1 du-thua=3
+       CU bo sot: ['Keypad']
+  MOI: dung=14 sai-lop=1 bo-sot=1 du-thua=2
+       MOI nham: that la 'MOSFET' -> doan 'IGBT' (conf 0.3721)
+       MOI bo sot: ['NTC-Thermistor']
+
+--- IMG20240228122902_jpg.rf.7fb4892c84e417ec78a512e415540535.jpg (GT=16) ---
+  CU : dung=15 sai-lop=0 bo-sot=1 du-thua=3
+       CU bo sot: ['Zener-Diode']
+  MOI: dung=14 sai-lop=0 bo-sot=2 du-thua=2
+       MOI bo sot: ['Zener-Diode', 'Capacitor-10mf']
+
+--- IMG_20240306_115158_jpg.rf.939b0bb6183517ac69d400d1c6098453.jpg (GT=4) ---
+  CU : dung=4 sai-lop=0 bo-sot=0 du-thua=0
+  MOI: dung=4 sai-lop=0 bo-sot=0 du-thua=0
+
+--- IMG_20240417_115018_jpg.rf.e9f7f1ddfc341d655476e94a6de731a0.jpg (GT=5) ---
+  CU : dung=5 sai-lop=0 bo-sot=0 du-thua=1
+  MOI: dung=4 sai-lop=1 bo-sot=0 du-thua=0
+       MOI nham: that la 'Resistor' -> doan 'Diode' (conf 0.8478)
+
+--- IMG_20240417_115137_jpg.rf.0d97ef0dc3c9d7138504a8431fcd7d24.jpg (GT=7) ---
+  CU : dung=7 sai-lop=0 bo-sot=0 du-thua=0
+  MOI: dung=6 sai-lop=1 bo-sot=0 du-thua=0
+       MOI nham: that la 'Resistor' -> doan 'Diode' (conf 0.8872)
+
+--- IMG_20240417_115924_jpg.rf.007935dd296a3261fc82f8728bbba0a3.jpg (GT=6) ---
+  CU : dung=6 sai-lop=0 bo-sot=0 du-thua=1
+  MOI: dung=6 sai-lop=0 bo-sot=0 du-thua=2
+
+=== TONG KET valid/ (61 lop, 6 anh, tong 54 GT box) ===
+  MODEL CU  (2071 anh) : 52/54 dung = 96.3%  (sai-lop=0, bo-sot=2, du-thua=8)
+  MODEL MOI (~13k anh) : 48/54 dung = 88.9%  (sai-lop=3, bo-sot=3, du-thua=6)

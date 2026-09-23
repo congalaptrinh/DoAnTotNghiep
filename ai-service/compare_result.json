@@ -1,0 +1,346 @@
+{
+  "wikimedia": [
+    {
+      "image": "resistors_multi.jpg",
+      "old": [
+        {
+          "class_name": "1-5-Volt-Battery",
+          "confidence": 0.2723,
+          "box": [
+            747.0,
+            0.0,
+            897.0,
+            524.0
+          ]
+        }
+      ],
+      "new": [
+        {
+          "class_name": "Fuse",
+          "confidence": 0.5192,
+          "box": [
+            58.0,
+            10.0,
+            894.0,
+            672.0
+          ]
+        }
+      ]
+    },
+    {
+      "image": "ic_multi.jpg",
+      "old": [
+        {
+          "class_name": "IGBT",
+          "confidence": 0.3091,
+          "box": [
+            179.0,
+            49.0,
+            352.0,
+            329.0
+          ]
+        },
+        {
+          "class_name": "IGBT",
+          "confidence": 0.3159,
+          "box": [
+            168.0,
+            380.0,
+            303.0,
+            644.0
+          ]
+        },
+        {
+          "class_name": "Soil-Moisture-Sensor",
+          "confidence": 0.4382,
+          "box": [
+            179.0,
+            51.0,
+            350.0,
+            331.0
+          ]
+        },
+        {
+          "class_name": "Arduino-Uno",
+          "confidence": 0.492,
+          "box": [
+            323.0,
+            203.0,
+            512.0,
+            362.0
+          ]
+        },
+        {
+          "class_name": "IGBT",
+          "confidence": 0.7148,
+          "box": [
+            507.0,
+            203.0,
+            792.0,
+            343.0
+          ]
+        },
+        {
+          "class_name": "IGBT",
+          "confidence": 0.7332,
+          "box": [
+            688.0,
+            213.0,
+            960.0,
+            410.0
+          ]
+        },
+        {
+          "class_name": "IGBT",
+          "confidence": 0.7547,
+          "box": [
+            297.0,
+            66.0,
+            577.0,
+            214.0
+          ]
+        },
+        {
+          "class_name": "IGBT",
+          "confidence": 0.7951,
+          "box": [
+            573.0,
+            38.0,
+            844.0,
+            234.0
+          ]
+        },
+        {
+          "class_name": "IGBT",
+          "confidence": 0.8562,
+          "box": [
+            1.0,
+            146.0,
+            276.0,
+            349.0
+          ]
+        }
+      ],
+      "new": [
+        {
+          "class_name": "IGBT",
+          "confidence": 0.3265,
+          "box": [
+            4.0,
+            152.0,
+            286.0,
+            348.0
+          ]
+        },
+        {
+          "class_name": "IGBT",
+          "confidence": 0.5825,
+          "box": [
+            623.0,
+            44.0,
+            836.0,
+            227.0
+          ]
+        }
+      ]
+    },
+    {
+      "image": "blank.jpg",
+      "old": [
+        {
+          "class_name": "Breadboard",
+          "confidence": 0.3795,
+          "box": [
+            0.0,
+            1.0,
+            634.0,
+            477.0
+          ]
+        }
+      ],
+      "new": [
+        {
+          "class_name": "Tact-Switch",
+          "confidence": 0.4353,
+          "box": [
+            10.0,
+            2.0,
+            614.0,
+            472.0
+          ]
+        }
+      ]
+    }
+  ],
+  "electrocom_valid": [
+    {
+      "image": "IMG20240228122809_jpg.rf.bb184f37aa98d96f1db1ac5492b4c81c.jpg",
+      "old": {
+        "gt_count": 16,
+        "correct": 15,
+        "wrong_class": 0,
+        "missed": 1,
+        "extra_fp": 3,
+        "mismatches": [],
+        "missed_classes": [
+          "Keypad"
+        ]
+      },
+      "new": {
+        "gt_count": 16,
+        "correct": 14,
+        "wrong_class": 1,
+        "missed": 1,
+        "extra_fp": 2,
+        "mismatches": [
+          {
+            "gt": "MOSFET",
+            "pred": "IGBT",
+            "conf": 0.3721
+          }
+        ],
+        "missed_classes": [
+          "NTC-Thermistor"
+        ]
+      }
+    },
+    {
+      "image": "IMG20240228122902_jpg.rf.7fb4892c84e417ec78a512e415540535.jpg",
+      "old": {
+        "gt_count": 16,
+        "correct": 15,
+        "wrong_class": 0,
+        "missed": 1,
+        "extra_fp": 3,
+        "mismatches": [],
+        "missed_classes": [
+          "Zener-Diode"
+        ]
+      },
+      "new": {
+        "gt_count": 16,
+        "correct": 14,
+        "wrong_class": 0,
+        "missed": 2,
+        "extra_fp": 2,
+        "mismatches": [],
+        "missed_classes": [
+          "Zener-Diode",
+          "Capacitor-10mf"
+        ]
+      }
+    },
+    {
+      "image": "IMG_20240306_115158_jpg.rf.939b0bb6183517ac69d400d1c6098453.jpg",
+      "old": {
+        "gt_count": 4,
+        "correct": 4,
+        "wrong_class": 0,
+        "missed": 0,
+        "extra_fp": 0,
+        "mismatches": [],
+        "missed_classes": []
+      },
+      "new": {
+        "gt_count": 4,
+        "correct": 4,
+        "wrong_class": 0,
+        "missed": 0,
+        "extra_fp": 0,
+        "mismatches": [],
+        "missed_classes": []
+      }
+    },
+    {
+      "image": "IMG_20240417_115018_jpg.rf.e9f7f1ddfc341d655476e94a6de731a0.jpg",
+      "old": {
+        "gt_count": 5,
+        "correct": 5,
+        "wrong_class": 0,
+        "missed": 0,
+        "extra_fp": 1,
+        "mismatches": [],
+        "missed_classes": []
+      },
+      "new": {
+        "gt_count": 5,
+        "correct": 4,
+        "wrong_class": 1,
+        "missed": 0,
+        "extra_fp": 0,
+        "mismatches": [
+          {
+            "gt": "Resistor",
+            "pred": "Diode",
+            "conf": 0.8478
+          }
+        ],
+        "missed_classes": []
+      }
+    },
+    {
+      "image": "IMG_20240417_115137_jpg.rf.0d97ef0dc3c9d7138504a8431fcd7d24.jpg",
+      "old": {
+        "gt_count": 7,
+        "correct": 7,
+        "wrong_class": 0,
+        "missed": 0,
+        "extra_fp": 0,
+        "mismatches": [],
+        "missed_classes": []
+      },
+      "new": {
+        "gt_count": 7,
+        "correct": 6,
+        "wrong_class": 1,
+        "missed": 0,
+        "extra_fp": 0,
+        "mismatches": [
+          {
+            "gt": "Resistor",
+            "pred": "Diode",
+            "conf": 0.8872
+          }
+        ],
+        "missed_classes": []
+      }
+    },
+    {
+      "image": "IMG_20240417_115924_jpg.rf.007935dd296a3261fc82f8728bbba0a3.jpg",
+      "old": {
+        "gt_count": 6,
+        "correct": 6,
+        "wrong_class": 0,
+        "missed": 0,
+        "extra_fp": 1,
+        "mismatches": [],
+        "missed_classes": []
+      },
+      "new": {
+        "gt_count": 6,
+        "correct": 6,
+        "wrong_class": 0,
+        "missed": 0,
+        "extra_fp": 2,
+        "mismatches": [],
+        "missed_classes": []
+      }
+    }
+  ],
+  "totals": {
+    "old": {
+      "gt": 54,
+      "correct": 52,
+      "wrong_class": 0,
+      "missed": 2,
+      "extra_fp": 8
+    },
+    "new": {
+      "gt": 54,
+      "correct": 48,
+      "wrong_class": 3,
+      "missed": 3,
+      "extra_fp": 6
+    }
+  }
+}
