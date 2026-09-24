@@ -393,46 +393,61 @@ class _BoundingBoxImageState extends State<_BoundingBoxImage> {
           );
         }
 
-        return AspectRatio(
-          aspectRatio: img.width / img.height,
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final scaleX = constraints.maxWidth / img.width;
-              final scaleY = constraints.maxHeight / img.height;
-              return Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.memory(widget.imageBytes, fit: BoxFit.fill),
-                  for (final d in widget.detections)
-                    Positioned(
-                      left: d.boundingBox.x * scaleX,
-                      top: d.boundingBox.y * scaleY,
-                      width: d.boundingBox.width * scaleX,
-                      height: d.boundingBox.height * scaleY,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(color: AppColors.danger, width: 2),
-                        ),
-                        alignment: Alignment.topLeft,
-                        child: Container(
-                          color: AppColors.danger,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: 1,
-                          ),
-                          child: Text(
-                            '${d.className} ${(d.confidence * 100).round()}%',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
+        // Chieu cao CO GIOI HAN cho khoi anh — anh vuong/doc (rat pho bien khi
+        // chup linh kien tu tren xuong bang dien thoai cam doc) neu de
+        // AspectRatio tu do chiem het chieu rong man hinh se cho ra 1 khoi RAT
+        // CAO (vd anh 640x640 -> cao bang ca chieu rong man hinh), day toan bo
+        // Column ben ngoai (khong cuon duoc) vuot qua man hinh — day chinh la
+        // nguyen nhan bug "BOTTOM OVERFLOWED" o man Ket qua nhan dien (xem
+        // 07-DECISIONS-LOG.md). Cap chieu cao co dinh, anh tu can giua ben
+        // trong theo dung ty le that (AspectRatio khong bi anh huong vi
+        // LayoutBuilder ben duoi van nhan dung constraints cua khoi da fit).
+        return SizedBox(
+          height: 200,
+          width: double.infinity,
+          child: Center(
+            child: AspectRatio(
+              aspectRatio: img.width / img.height,
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final scaleX = constraints.maxWidth / img.width;
+                  final scaleY = constraints.maxHeight / img.height;
+                  return Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      Image.memory(widget.imageBytes, fit: BoxFit.fill),
+                      for (final d in widget.detections)
+                        Positioned(
+                          left: d.boundingBox.x * scaleX,
+                          top: d.boundingBox.y * scaleY,
+                          width: d.boundingBox.width * scaleX,
+                          height: d.boundingBox.height * scaleY,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(color: AppColors.danger, width: 2),
+                            ),
+                            alignment: Alignment.topLeft,
+                            child: Container(
+                              color: AppColors.danger,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                                vertical: 1,
+                              ),
+                              child: Text(
+                                '${d.className} ${(d.confidence * 100).round()}%',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                ),
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                    ),
-                ],
-              );
-            },
+                    ],
+                  );
+                },
+              ),
+            ),
           ),
         );
       },

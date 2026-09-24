@@ -1,0 +1,12 @@
+venv/
+__pycache__/
+*.pyc
+test_images/
+eval_split_result.json
+compare_result.json
+compare_summary.txt
+eval_stdout.json
+ai-service.log
+*.jpg
+*.jpeg
+*.png

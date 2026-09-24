@@ -2,7 +2,18 @@
 
 Microservice Python (FastAPI) nhận ảnh, chạy YOLOv9 và trả về loại + số lượng linh kiện. Chỉ trả kết quả nhận diện — **không ghi database**; Backend (`../backend`) gọi service này qua `POST /detect` (xem `backend/src/services/ai.service.js`).
 
-## Cài đặt
+## Chạy (cách chính thức — Docker)
+
+```bash
+cd ../backend
+docker compose up -d
+```
+
+Lệnh này build (lần đầu) và khởi động AI Service **cùng lúc với PostgreSQL**, chạy nền vĩnh viễn tới khi `docker compose down` — không phụ thuộc terminal nào, không cần biết tới khái niệm "AI Service" riêng. Xem `Dockerfile` — cài `torch`/`torchvision` từ index CPU-only của PyTorch (image ~2.8GB thay vì ~10GB nếu để pip tự chọn bản có CUDA, vốn không cần thiết vì không dùng GPU). Kiểm tra: `curl http://localhost:8001/health` → `{"success":true,"data":{"status":"ok","model_loaded":true}}` (mất khoảng 20-30 giây để nạp model sau khi container start).
+
+Backend đọc địa chỉ AI Service từ biến `AI_SERVICE_URL` (mặc định `http://localhost:8001`, xem `backend/.env.example`).
+
+## Cài đặt/chạy thủ công (không dùng Docker — dự phòng)
 
 Yêu cầu: Python 3.11 (đã test 3.11.9), CPU là đủ (GPU không bắt buộc).
 
@@ -11,19 +22,10 @@ cd ai-service
 python -m venv venv
 venv\Scripts\activate          # Linux/macOS: source venv/bin/activate
 pip install -r requirements.txt
-```
-
-`requirements.txt` cố tình **không** dùng package `ultralytics`: model được train bằng mã nguồn fork YOLOv9 nên checkpoint chỉ đọc được bằng chính mã đó, đã đưa sẵn vào `yolov9_src/` (xem mục Nguồn gốc).
-
-## Chạy
-
-```bash
 uvicorn app.main:app --host 127.0.0.1 --port 8001
 ```
 
-**Tự khởi động**: `npm run dev`/`npm start` của backend và `npm run dev` của web tự chạy `ensure-running.js` (khởi động AI Service nền nếu chưa chạy, log ở `ai-service/ai-service.log`). App Mobile gọi qua Backend nên chỉ cần Backend chạy. Hoặc bấm đúp `start.bat` (tự dùng venv). **AI Service phải đang chạy thì "Nhập kho bằng AI" mới hoạt động** — nếu tắt terminal/khởi động lại máy, Backend sẽ báo "Không kết nối được tới AI Service" cho tới khi chạy lại.
-
-Backend đọc địa chỉ này từ biến `AI_SERVICE_URL` (mặc định `http://localhost:8001`, xem `backend/.env.example`). Lần khởi động đầu mất vài giây để nạp model (`models/best.pt`).
+`requirements.txt` cố tình **không** dùng package `ultralytics`: model được train bằng mã nguồn fork YOLOv9 nên checkpoint chỉ đọc được bằng chính mã đó, đã đưa sẵn vào `yolov9_src/` (xem mục Nguồn gốc). Có thể bấm đúp `start.bat` thay vì gõ lệnh `uvicorn` (tự dùng `venv`).
 
 | Endpoint | Mô tả |
 |---|---|

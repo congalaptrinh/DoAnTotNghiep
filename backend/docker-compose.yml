@@ -12,5 +12,18 @@ services:
     volumes:
       - warehouse_postgres_data:/var/lib/postgresql/data
 
+  ai-service:
+    build: ../ai-service
+    container_name: warehouse_ai_service
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8001/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
 volumes:
   warehouse_postgres_data:
