@@ -21,7 +21,7 @@ pip install -r requirements.txt
 uvicorn app.main:app --host 127.0.0.1 --port 8001
 ```
 
-Trên Windows có thể bấm đúp `start.bat` (tự dùng venv). **AI Service phải đang chạy thì "Nhập kho bằng AI" mới hoạt động** — nếu tắt terminal/khởi động lại máy, Backend sẽ báo "Không kết nối được tới AI Service" cho tới khi chạy lại.
+**Tự khởi động**: `npm run dev`/`npm start` của backend và `npm run dev` của web tự chạy `ensure-running.js` (khởi động AI Service nền nếu chưa chạy, log ở `ai-service/ai-service.log`). App Mobile gọi qua Backend nên chỉ cần Backend chạy. Hoặc bấm đúp `start.bat` (tự dùng venv). **AI Service phải đang chạy thì "Nhập kho bằng AI" mới hoạt động** — nếu tắt terminal/khởi động lại máy, Backend sẽ báo "Không kết nối được tới AI Service" cho tới khi chạy lại.
 
 Backend đọc địa chỉ này từ biến `AI_SERVICE_URL` (mặc định `http://localhost:8001`, xem `backend/.env.example`). Lần khởi động đầu mất vài giây để nạp model (`models/best.pt`).
 
