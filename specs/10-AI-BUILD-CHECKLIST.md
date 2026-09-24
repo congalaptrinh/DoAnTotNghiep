@@ -85,7 +85,7 @@
 
 - [x] H1. Viết `README.md` cho `ai-service/` — cài đặt, chạy, endpoint, script đánh giá, nguồn dataset ElectroCom61 (CC BY 4.0) và mã nguồn YOLOv9 fork. Không tự bịa tên tác giả/DOI: cần bổ sung trích dẫn chính thức của bài báo dataset khi viết báo cáo đồ án.
 - [x] H2. `07-DECISIONS-LOG.md` đã cập nhật lần cuối (so sánh ảnh điện thoại thật, chấm điểm 205 ảnh test/, khuyến nghị model, sửa Telex màn đăng nhập).
-- [ ] H3. Commit + push đã xong trên `feature/ai-service`; **merge vào `main` chờ người dùng quyết định model rồi tự xác nhận**.
+- [x] H3. Commit + push xong, merge `feature/ai-service` vào `main` (2026-09-24). Quyết định model cuối: GIỮ model mới (~13k ảnh) theo lựa chọn của người dùng dù đo được kém hơn model cũ (93.0% so với 96.2% trên 205 ảnh test/) — xem `07-DECISIONS-LOG.md`.
 
 ---
 

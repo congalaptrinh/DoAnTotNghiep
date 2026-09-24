@@ -593,3 +593,9 @@
 - **Kiểm tra tác vụ nền dang dở**: `b90oohdk7` (AI Service uvicorn) và `blzc7osqj` (monitor) đã tự dừng từ trước; `bbgwrst9q` là Backend nodemon đang chạy bình thường (server dev hợp lệ, giữ nguyên). Không có tiến trình rác.
 - **Ghi nhận minh bạch**: khi tìm ảnh chụp, đã vô tình kéo 3 ảnh cá nhân từ `/sdcard/DCIM` về máy tính để kiểm tra có linh kiện không — CHƯA mở xem ảnh nào, đã xoá ngay cả 3; người dùng đã xác nhận không cần xử lý thêm.
 - Ảnh hưởng tới: AI Service, Mobile (màn đăng nhập). Không ảnh hưởng Backend/Web.
+
+## 2026-09-24 — AI Service: QUYẾT ĐỊNH CUỐI về model — GIỮ model mới (~13k ảnh), do người dùng chủ động chọn
+- **Quyết định**: giữ model mới (~13k ảnh sau augmentation) làm `ai-service/models/best.pt` chính thức (đã nằm trong git từ commit f4d8346); KHÔNG quay lại model cũ (2071 ảnh gốc). File backup `best_v1_2071img.pt` đã xoá khỏi máy (không còn cần giữ).
+- **Bối cảnh cần đọc đúng**: đây là **lựa chọn chủ động của người dùng, KHÔNG phải do model mới tốt hơn về mặt kỹ thuật**. Số liệu đo được nghiêng về model cũ: trên 205 ảnh `test/` của ElectroCom61 (1149 vật thể có nhãn thật) model CŨ đạt **96.2%** (1105/1149), model MỚI đạt **93.0%** (1068/1149) — chênh 3.2 điểm %, model mới bỏ sót 58 (cũ 26) và nhầm Resistor→Diode 3 lần (cũ 0 lần). Trên 6 ảnh `valid/`: 96.3% so với 88.9%. Trên ảnh điện thoại thật (G2): hòa. Khuyến nghị kỹ thuật lúc đó là giữ model cũ; người dùng cân nhắc và chọn giữ model mới.
+- **Hệ quả cần nhớ**: với model mới, khi dùng thật cần kiểm tra lại kết quả AI trước khi xác nhận phiếu (cơ chế chọn vật tư thủ công ở Web/Mobile đã đảm bảo điều này); đặc biệt dễ nhầm Resistor↔Diode và bỏ sót vật thể. Muốn quay lại model cũ sau này chỉ cần huấn luyện/khôi phục lại checkpoint 2071 ảnh (không còn bản backup cục bộ) — số liệu đối chiếu vẫn còn ở `ai-service/compare_result.json`, `eval_split_result.json`.
+- Hoàn tất Giai đoạn H3: merge `feature/ai-service` vào `main`.
