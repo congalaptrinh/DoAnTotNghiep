@@ -96,7 +96,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ],
                     TextFormField(
                       controller: _emailCtrl,
-                      keyboardType: TextInputType.emailAddress,
+                      // visiblePassword (không phải emailAddress) để tắt bộ gõ Telex ghép dấu —
+                      // "test" bị biến thành "tét" làm sai email, xem 07-DECISIONS-LOG.md.
+                      keyboardType: TextInputType.visiblePassword,
+                      autocorrect: false,
+                      enableSuggestions: false,
                       autofillHints: const [AutofillHints.email],
                       decoration: const InputDecoration(labelText: 'Email', hintText: 'email@techstore.vn'),
                       validator: (v) => (v == null || v.trim().isEmpty) ? 'Vui lòng nhập email' : null,

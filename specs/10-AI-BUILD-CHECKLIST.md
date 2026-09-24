@@ -83,9 +83,9 @@
 
 ## Giai đoạn H — Hoàn thiện
 
-- [ ] H1. Viết `README.md` ngắn cho `ai-service/` — cách cài đặt, cách chạy, ghi rõ nguồn dataset (trích dẫn ElectroCom61) và mã nguồn YOLOv9 fork đã dùng.
-- [ ] H2. Cập nhật `07-DECISIONS-LOG.md` lần cuối cho AI Service.
-- [ ] H3. Commit + push, merge vào `main` sau khi người dùng xác nhận toàn bộ ổn.
+- [x] H1. Viết `README.md` cho `ai-service/` — cài đặt, chạy, endpoint, script đánh giá, nguồn dataset ElectroCom61 (CC BY 4.0) và mã nguồn YOLOv9 fork. Không tự bịa tên tác giả/DOI: cần bổ sung trích dẫn chính thức của bài báo dataset khi viết báo cáo đồ án.
+- [x] H2. `07-DECISIONS-LOG.md` đã cập nhật lần cuối (so sánh ảnh điện thoại thật, chấm điểm 205 ảnh test/, khuyến nghị model, sửa Telex màn đăng nhập).
+- [ ] H3. Commit + push đã xong trên `feature/ai-service`; **merge vào `main` chờ người dùng quyết định model rồi tự xác nhận**.
 
 ---
 

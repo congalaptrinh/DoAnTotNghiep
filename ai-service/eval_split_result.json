@@ -1,0 +1,105 @@
+{
+  "images": 205,
+  "totals": {
+    "old": {
+      "gt_count": 1149,
+      "correct": 1105,
+      "wrong_class": 18,
+      "missed": 26,
+      "extra_fp": 76
+    },
+    "new": {
+      "gt_count": 1149,
+      "correct": 1068,
+      "wrong_class": 23,
+      "missed": 58,
+      "extra_fp": 78
+    }
+  },
+  "top_confusions": {
+    "old": [
+      [
+        "MOSFET -> IGBT",
+        2
+      ],
+      [
+        "ESP32 -> ESP32-CAM",
+        2
+      ],
+      [
+        "Tact-Switch -> Pin-Header",
+        1
+      ],
+      [
+        "Arduino-Nano -> Zener-Diode",
+        1
+      ],
+      [
+        "TCRT5000 -> Breadboard",
+        1
+      ],
+      [
+        "IC-Base-28-Pin -> IC-Base-14-Pin",
+        1
+      ],
+      [
+        "Bridge-Rectifier -> Relay-Module",
+        1
+      ],
+      [
+        "Arduino-Uno -> Arduino-Mega",
+        1
+      ],
+      [
+        "IR-Sensor -> TCRT5000",
+        1
+      ],
+      [
+        "IC-Chip -> Buzzer",
+        1
+      ]
+    ],
+    "new": [
+      [
+        "MOSFET -> IGBT",
+        3
+      ],
+      [
+        "Resistor -> Diode",
+        3
+      ],
+      [
+        "ESP32 -> ESP32-CAM",
+        2
+      ],
+      [
+        "Tact-Switch -> Pin-Header",
+        1
+      ],
+      [
+        "IR-Sensor -> 1-5-Volt-Battery",
+        1
+      ],
+      [
+        "IGBT -> MOSFET",
+        1
+      ],
+      [
+        "Arduino-Nano -> Zener-Diode",
+        1
+      ],
+      [
+        "TCRT5000 -> Breadboard",
+        1
+      ],
+      [
+        "IC-Base-28-Pin -> IC-Base-14-Pin",
+        1
+      ],
+      [
+        "Bridge-Rectifier -> Relay-Module",
+        1
+      ]
+    ]
+  }
+}
