@@ -1,0 +1,51 @@
+// 6 nhà cung cấp demo — tên/thông tin hư cấu, KHÔNG trùng tên doanh nghiệp thật nào.
+module.exports = [
+  {
+    supplier_name: 'Công ty TNHH Linh Kiện Điện Tử Phương Nam',
+    contact_name: 'Lê Hoàng Phúc',
+    phone: '0901234567',
+    email: 'kinhdoanh@phuongnam-electronics.vn',
+    address: '23 Đường Nguyễn Oanh, Quận Gò Vấp, TP. Hồ Chí Minh',
+    website: 'https://phuongnam-electronics.vn',
+  },
+  {
+    supplier_name: 'Công ty CP Thiết Bị Điện Tử Hồng Hà',
+    contact_name: 'Vũ Thị Ngọc Anh',
+    phone: '0912345678',
+    email: 'sales@hongha-devices.vn',
+    address: '156 Đường Cầu Giấy, Quận Cầu Giấy, Hà Nội',
+    website: 'https://hongha-devices.vn',
+  },
+  {
+    supplier_name: 'DNTN Vật Tư Điện Tử Minh Khang',
+    contact_name: 'Đặng Minh Khang',
+    phone: '0923456789',
+    email: 'minhkhang.vattu@gmail.com',
+    address: '89 Đường Trần Phú, Quận Hải Châu, Đà Nẵng',
+    website: null,
+  },
+  {
+    supplier_name: 'Công ty TNHH XNK Linh Kiện Việt Thành',
+    contact_name: 'Phan Văn Thành',
+    phone: '0934567890',
+    email: 'xnk@vietthanh-import.vn',
+    address: '301 Đường Quang Trung, Quận 12, TP. Hồ Chí Minh',
+    website: 'https://vietthanh-import.vn',
+  },
+  {
+    supplier_name: 'Công ty CP Công Nghệ Điện Tử Đông Á',
+    contact_name: 'Trịnh Thu Hương',
+    phone: '0945678901',
+    email: 'cskh@dongatech.vn',
+    address: '67 Đường Nguyễn Văn Linh, Quận Hải An, Hải Phòng',
+    website: 'https://dongatech.vn',
+  },
+  {
+    supplier_name: 'Cửa hàng Linh Kiện Điện Tử Tân Phát',
+    contact_name: 'Nguyễn Tấn Phát',
+    phone: '0956789012',
+    email: 'tanphat.store@gmail.com',
+    address: '14 Đường Lý Thường Kiệt, TP. Biên Hòa, Đồng Nai',
+    website: null,
+  },
+];

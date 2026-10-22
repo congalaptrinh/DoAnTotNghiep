@@ -10,7 +10,8 @@
     "test": "jest --runInBand",
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
-    "prisma:seed": "node prisma/seed.js"
+    "prisma:seed": "node prisma/seed.js",
+    "seed:demo": "node prisma/seed-demo.js"
   },
   "jest": {
     "testEnvironment": "node",

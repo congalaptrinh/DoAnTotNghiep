@@ -29,6 +29,27 @@ npm run dev
 
 Backend chạy ở `http://localhost:5000`, tự kết nối tới PostgreSQL và AI Service đã chạy ở bước 2 (qua biến `AI_SERVICE_URL` trong `.env`).
 
+#### Dữ liệu demo thực tế (khuyến nghị thay cho `prisma:seed`)
+
+`npm run prisma:seed` chỉ tạo 4 vai trò + 1 tài khoản admin (dữ liệu tối thiểu). Để có dữ liệu demo đầy đủ và thực tế — danh mục/vật tư linh kiện điện tử, kho, nhà cung cấp, lịch sử nhập/xuất/chuyển/thu hồi/kiểm kê/thanh lý trong 30 ngày gần nhất — chạy thêm:
+
+```bash
+npm run seed:demo
+```
+
+Script này tự dọn sạch dữ liệu demo/test cũ trước khi tạo lại, nên chạy lại bao nhiêu lần cũng được (không bị trùng). Chi tiết: `backend/prisma/seed-demo.js`.
+
+**Tài khoản demo** (mật khẩu chung `Demo@2026`, riêng admin giữ nguyên `Admin@123`):
+
+| Email | Vai trò | Mật khẩu |
+|---|---|---|
+| admin@warehouse.local | Quản trị hệ thống | `Admin@123` |
+| minh.nguyen@techstore.vn | Quản lý kho | `Demo@2026` |
+| lan.tran@techstore.vn | Nhân viên kho | `Demo@2026` |
+| duc.pham@techstore.vn | Người xem báo cáo | `Demo@2026` |
+
+Bảng đối chiếu 61 lớp AI nhận diện được với mã vật tư demo tương ứng: `ai-service/class_mapping.md`.
+
 ### 4. Khởi động Web
 
 ```bash
