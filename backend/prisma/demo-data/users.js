@@ -5,8 +5,8 @@ const DEMO_PASSWORD = 'Demo@2026';
 module.exports = {
   password: DEMO_PASSWORD,
   users: [
-    { full_name: 'Nguyễn Văn Minh', email: 'minh.nguyen@techstore.vn', role_name: 'warehouse_manager' },
-    { full_name: 'Trần Thị Lan', email: 'lan.tran@techstore.vn', role_name: 'warehouse_staff' },
-    { full_name: 'Phạm Văn Đức', email: 'duc.pham@techstore.vn', role_name: 'report_viewer' },
+    { full_name: 'Nguyễn Văn Minh', email: 'minh.nguyen@demo.local', role_name: 'warehouse_manager' },
+    { full_name: 'Trần Thị Lan', email: 'lan.tran@demo.local', role_name: 'warehouse_staff' },
+    { full_name: 'Phạm Văn Đức', email: 'duc.pham@demo.local', role_name: 'report_viewer' },
   ],
 };

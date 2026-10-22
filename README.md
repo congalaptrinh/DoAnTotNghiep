@@ -37,16 +37,20 @@ Backend chạy ở `http://localhost:5000`, tự kết nối tới PostgreSQL v�
 npm run seed:demo
 ```
 
-Script này tự dọn sạch dữ liệu demo/test cũ trước khi tạo lại, nên chạy lại bao nhiêu lần cũng được (không bị trùng). Chi tiết: `backend/prisma/seed-demo.js`.
+⚠️ **`seed:demo` XOÁ TOÀN BỘ** vật tư, danh mục, kho, vị trí, nhà cung cấp, phiếu (nhập/xuất/chuyển/thu hồi/kiểm kê/thanh lý) và lịch sử biến động hiện có trước khi tạo lại dữ liệu demo — không có bước xác nhận. Chỉ giữ lại: 4 vai trò có sẵn, tài khoản `admin@warehouse.local`, và bất kỳ user nào khác **không nằm trong danh sách 3 tài khoản demo** (`backend/prisma/demo-data/users.js`). Chỉ chạy trên DB dev, không chạy trên DB đang chứa dữ liệu thật.
 
-**Tài khoản demo** (mật khẩu chung `Demo@2026`, riêng admin giữ nguyên `Admin@123`):
+Script tự dọn sạch dữ liệu demo/test cũ trước khi tạo lại, nên chạy lại bao nhiêu lần cũng được (không bị trùng). Số lượng/ngày tháng của dữ liệu sinh ra giống hệt nhau giữa các lần chạy (random có seed cố định). Chi tiết: `backend/prisma/seed-demo.js`.
+
+Tài khoản `admin@warehouse.local` **không bao giờ bị script này đụng tới** (không xoá, không update) — mật khẩu admin giữ nguyên dù bạn đổi gì trong lúc dùng app. Ngược lại, 3 tài khoản demo bên dưới (nhận diện đúng theo email trong `demo-data/users.js`) bị xoá và tạo lại **mỗi lần chạy `seed:demo`**, nên nếu bạn từng đổi mật khẩu của 1 trong 3 tài khoản này qua app, nó sẽ bị reset về `Demo@2026` ở lần chạy seed tiếp theo.
+
+**Tài khoản demo** (mật khẩu chung `Demo@2026`):
 
 | Email | Vai trò | Mật khẩu |
 |---|---|---|
-| admin@warehouse.local | Quản trị hệ thống | `Admin@123` |
-| minh.nguyen@techstore.vn | Quản lý kho | `Demo@2026` |
-| lan.tran@techstore.vn | Nhân viên kho | `Demo@2026` |
-| duc.pham@techstore.vn | Người xem báo cáo | `Demo@2026` |
+| admin@warehouse.local | Quản trị hệ thống | `Admin@123` (mặc định khi cài mới, có thể đã được đổi) |
+| minh.nguyen@demo.local | Quản lý kho | `Demo@2026` |
+| lan.tran@demo.local | Nhân viên kho | `Demo@2026` |
+| duc.pham@demo.local | Người xem báo cáo | `Demo@2026` |
 
 Bảng đối chiếu 61 lớp AI nhận diện được với mã vật tư demo tương ứng: `ai-service/class_mapping.md`.
 

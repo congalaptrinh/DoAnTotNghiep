@@ -35,10 +35,27 @@ const warehousesData = require('./demo-data/warehouses');
 const suppliersData = require('./demo-data/suppliers');
 const { password: DEMO_PASSWORD, users: usersData } = require('./demo-data/users');
 
-const ADMIN_EMAIL = 'admin@warehouse.local';
+// admin@warehouse.local không nằm trong demo-data/users.js nên không bao giờ bị
+// wipeOldData() đụng tới (chỉ xoá đúng các email trong DEMO_EMAILS bên dưới).
+const DEMO_EMAILS = usersData.map((u) => u.email);
+
+// Seed cố định để mỗi lần chạy seed:demo ra đúng 1 bộ dữ liệu (số lượng/ngày tháng
+// giống hệt nhau giữa các lần chạy) — không dùng Math.random() thô nữa.
+const RNG_SEED = 20261022;
+function mulberry32(seed) {
+  let a = seed;
+  return function random() {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const random = mulberry32(RNG_SEED);
 
 function rand(min, max) {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
+  return Math.floor(random() * (max - min + 1)) + min;
 }
 
 function pick(arr) {
@@ -47,13 +64,32 @@ function pick(arr) {
 
 // Thời điểm ngẫu nhiên trong `maxDays` ngày gần nhất (liên tục, không chỉ theo ngày tròn).
 function pastDate(maxDays) {
-  return new Date(Date.now() - Math.random() * maxDays * 24 * 60 * 60 * 1000);
+  return new Date(Date.now() - random() * maxDays * 24 * 60 * 60 * 1000);
 }
 
 // ─────────────────────────────────────────────────────────────────────
 // 1. DỌN SẠCH dữ liệu nghiệp vụ cũ (giữ nguyên bảng roles + user admin)
 // ─────────────────────────────────────────────────────────────────────
 async function wipeOldData() {
+  // Đếm trước khi xoá (bảng nào + bao nhiêu bản ghi cũ bị dọn) để in báo cáo —
+  // chỉ đọc, không ảnh hưởng gì tới logic dọn dữ liệu bên dưới.
+  const oldCounts = {
+    stockMovements: await prisma.stockMovement.count(),
+    importOrders: await prisma.importOrder.count(),
+    exportOrders: await prisma.exportOrder.count(),
+    transferOrders: await prisma.transferOrder.count(),
+    recoveryOrders: await prisma.recoveryOrder.count(),
+    stocktakeSessions: await prisma.stocktakeSession.count(),
+    liquidationOrders: await prisma.liquidationOrder.count(),
+    inventoryRows: await prisma.inventory.count(),
+    storageLocations: await prisma.storageLocation.count(),
+    warehouses: await prisma.warehouse.count(),
+    items: await prisma.item.count(),
+    categories: await prisma.itemCategory.count(),
+    suppliers: await prisma.supplier.count(),
+    usersDemo: await prisma.user.count({ where: { email: { in: DEMO_EMAILS } } }),
+  };
+
   await prisma.stockMovement.deleteMany({});
   await prisma.stocktakeSessionItem.deleteMany({});
   await prisma.liquidationOrderItem.deleteMany({});
@@ -73,7 +109,13 @@ async function wipeOldData() {
   await prisma.item.deleteMany({});
   await prisma.itemCategory.deleteMany({});
   await prisma.supplier.deleteMany({});
-  await prisma.user.deleteMany({ where: { NOT: { email: ADMIN_EMAIL } } });
+  // Chỉ xoá đúng các user nằm trong demo-data/users.js — không đụng tới admin,
+  // cũng không đụng tới bất kỳ user nào khác người dùng tự tạo ngoài danh sách demo.
+  await prisma.user.deleteMany({ where: { email: { in: DEMO_EMAILS } } });
+
+  console.log('\n=== Đã dọn dữ liệu cũ (test/demo trước đó) ===');
+  console.table(oldCounts);
+  return oldCounts;
 }
 
 // ─────────────────────────────────────────────────────────────────────
@@ -170,7 +212,7 @@ async function getAvailable(itemId, warehouseId, locationId) {
 
 async function run() {
   console.log('== Dọn dữ liệu demo/test cũ ==');
-  await wipeOldData();
+  const oldCounts = await wipeOldData();
 
   console.log('== Tạo danh mục vật tư ==');
   const categoryIdByName = await createCategories();
@@ -471,7 +513,7 @@ async function run() {
 
   console.log('\n=== KẾT QUẢ SEED DEMO ===');
   console.table(counts);
-  return counts;
+  return { oldCounts, counts };
 }
 
 run()
