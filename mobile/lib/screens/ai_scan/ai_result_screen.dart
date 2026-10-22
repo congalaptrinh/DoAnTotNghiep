@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/ai_detect_result.dart';
 import '../../models/item.dart';
 import '../../models/storage_location.dart';
+import '../../models/supplier.dart';
 import '../../models/warehouse.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../providers/history_provider.dart';
@@ -16,6 +17,7 @@ import '../../services/api_client.dart';
 import '../../services/item_service.dart';
 import '../../services/order_service.dart';
 import '../../services/storage_location_service.dart';
+import '../../services/supplier_service.dart';
 import '../../services/warehouse_service.dart';
 import '../../utils/app_theme.dart';
 
@@ -55,7 +57,9 @@ class _AiResultScreenState extends ConsumerState<AiResultScreen> {
   List<Warehouse> _warehouses = [];
   List<StorageLocation> _locations = [];
   List<Item> _items = [];
+  List<Supplier> _suppliers = [];
   String? _warehouseId;
+  String? _supplierId;
   bool _loading = true;
   bool _loadingLocations = false;
   bool _submitting = false;
@@ -79,14 +83,18 @@ class _AiResultScreenState extends ConsumerState<AiResultScreen> {
   }
 
   Future<void> _loadInitialData() async {
-    final (warehouses, items) = await (
+    // Danh sách NCC chỉ là TUỲ CHỌN cho luồng này — lỗi tải (mạng, thiếu quyền...)
+    // không được chặn cả màn hình, dropdown chỉ còn "Không chọn" (xem 07-DECISIONS-LOG.md).
+    final (warehouses, items, suppliers) = await (
       WarehouseService.instance.listActive(),
       ItemService.instance.list(),
+      SupplierService.instance.listActive().catchError((_) => <Supplier>[]),
     ).wait;
     if (!mounted) return;
     setState(() {
       _warehouses = warehouses;
       _items = items;
+      _suppliers = suppliers;
       _loading = false;
     });
   }
@@ -128,6 +136,7 @@ class _AiResultScreenState extends ConsumerState<AiResultScreen> {
     try {
       await OrderService.instance.createFromAi(
         warehouseId: _warehouseId!,
+        supplierId: _supplierId,
         items: activeRows
             .map(
               (r) => QuickOrderItem(
@@ -159,7 +168,12 @@ class _AiResultScreenState extends ConsumerState<AiResultScreen> {
       appBar: buildBrandAppBar('Kết quả nhận diện'),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
-          : Column(
+          : SingleChildScrollView(
+              // Cho phép cuộn toàn bộ nội dung — đảm bảo nút "Xác nhận tạo phiếu nhập"
+              // luôn bấm được dù danh sách nhãn dài hay bàn phím đang mở (Scaffold tự
+              // co lại theo bàn phím, nội dung dài hơn màn hình thì cuộn xuống được).
+              child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
                 _BoundingBoxImage(
                   imageBytes: _imageBytes,
@@ -182,6 +196,35 @@ class _AiResultScreenState extends ConsumerState<AiResultScreen> {
                         )
                         .toList(),
                     onChanged: _onWarehouseChanged,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  // `key` đổi theo `_supplierId`: DropdownButtonFormField là FormField, chỉ
+                  // đọc `initialValue` ĐÚNG 1 LẦN lúc khởi tạo FormFieldState — đổi `key`
+                  // buộc Flutter dựng lại state mới mỗi lần giá trị đổi, để hiển thị luôn
+                  // khớp đúng giá trị thực sự sẽ gửi đi (tránh hiện sai NCC lúc mới mở màn hình).
+                  child: DropdownButtonFormField<String>(
+                    key: ValueKey(_supplierId),
+                    initialValue: _supplierId,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'Nhà cung cấp (tuỳ chọn)'),
+                    items: [
+                      const DropdownMenuItem(
+                        value: null,
+                        child: Text('Không chọn', maxLines: 1, overflow: TextOverflow.ellipsis),
+                      ),
+                      ..._suppliers.map(
+                        (s) => DropdownMenuItem(
+                          value: s.supplierId,
+                          child: Text(s.supplierName, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        ),
+                      ),
+                    ],
+                    onChanged: (v) => setState(() => _supplierId = v),
                   ),
                 ),
                 SizedBox(
@@ -228,6 +271,7 @@ class _AiResultScreenState extends ConsumerState<AiResultScreen> {
                   ),
                 ),
               ],
+              ),
             ),
     );
   }

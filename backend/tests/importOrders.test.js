@@ -1,4 +1,4 @@
-const { app, request, loginAdmin, createAndLoginUser, createFixture } = require('./helpers');
+const { app, request, loginAdmin, createAndLoginUser, createFixture, createSupplier } = require('./helpers');
 
 describe('Import Orders (E1)', () => {
   let adminToken;
@@ -58,5 +58,43 @@ describe('Import Orders (E1)', () => {
 
     const second = await request(app).post(`/api/import-orders/${id}/confirm`).set('Authorization', `Bearer ${adminToken}`);
     expect(second.status).toBe(400);
+  });
+
+  test('from-ai KHÔNG có supplier_id -> tạo + xác nhận ngay (CONFIRMED), supplier_id null', async () => {
+    const res = await request(app)
+      .post('/api/import-orders/from-ai')
+      .set('Authorization', `Bearer ${staff.token}`)
+      .send({ warehouse_id: fx.warehouse.warehouse_id, items: [{ item_id: fx.item.item_id, location_id: fx.location.location_id, quantity: 5 }] });
+    expect(res.status).toBe(201);
+    expect(res.body.data.status).toBe('CONFIRMED');
+    expect(res.body.data.supplier_id).toBeNull();
+  });
+
+  test('from-ai CÓ supplier_id hợp lệ -> lưu đúng supplier trên phiếu', async () => {
+    const supplier = await createSupplier(adminToken);
+    const res = await request(app)
+      .post('/api/import-orders/from-ai')
+      .set('Authorization', `Bearer ${staff.token}`)
+      .send({
+        warehouse_id: fx.warehouse.warehouse_id,
+        supplier_id: supplier.supplier_id,
+        items: [{ item_id: fx.item.item_id, location_id: fx.location.location_id, quantity: 5 }],
+      });
+    expect(res.status).toBe(201);
+    expect(res.body.data.status).toBe('CONFIRMED');
+    expect(res.body.data.supplier_id).toBe(supplier.supplier_id);
+    expect(res.body.data.supplier.supplier_name).toBe(supplier.supplier_name);
+  });
+
+  test('from-ai supplier_id KHÔNG tồn tại -> 404 rõ ràng, không tạo phiếu', async () => {
+    const res = await request(app)
+      .post('/api/import-orders/from-ai')
+      .set('Authorization', `Bearer ${staff.token}`)
+      .send({
+        warehouse_id: fx.warehouse.warehouse_id,
+        supplier_id: '00000000-0000-0000-0000-000000000000',
+        items: [{ item_id: fx.item.item_id, location_id: fx.location.location_id, quantity: 5 }],
+      });
+    expect(res.status).toBe(404);
   });
 });

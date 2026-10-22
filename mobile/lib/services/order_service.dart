@@ -38,12 +38,17 @@ class OrderService {
 
   /// Giai đoạn E — `POST /import-orders/from-ai`: tạo + xác nhận trong 1 lời gọi
   /// (khác D3 — đây là endpoint riêng chỉ cho luồng AI, order không bao giờ lộ
-  /// ra ngoài ở trạng thái DRAFT). Không gửi `supplier_id`/`note` (Mobile không
-  /// cần, giống Web bỏ trống khi không nhập).
-  Future<void> createFromAi({required String warehouseId, required List<QuickOrderItem> items}) {
+  /// ra ngoài ở trạng thái DRAFT). `supplierId` TUỲ CHỌN — giống Web, bỏ trống
+  /// nếu người dùng không chọn nhà cung cấp (không gửi `note`, Mobile không có
+  /// trường ghi chú ở luồng này).
+  Future<void> createFromAi({required String warehouseId, String? supplierId, required List<QuickOrderItem> items}) {
     return ApiClient.instance.post(
       '/import-orders/from-ai',
-      data: {'warehouse_id': warehouseId, 'items': items.map((e) => e.toJson()).toList()},
+      data: {
+        'warehouse_id': warehouseId,
+        if (supplierId != null) 'supplier_id': supplierId,
+        'items': items.map((e) => e.toJson()).toList(),
+      },
     );
   }
 

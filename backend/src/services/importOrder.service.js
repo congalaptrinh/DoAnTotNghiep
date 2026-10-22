@@ -96,6 +96,13 @@ async function confirm(id, userId) {
 async function createFromAi(data, userId) {
   const { items, ...rest } = data;
 
+  if (rest.supplier_id) {
+    const supplier = await prisma.supplier.findUnique({ where: { supplier_id: rest.supplier_id } });
+    if (!supplier) {
+      throw new ApiError(404, 'Không tìm thấy nhà cung cấp');
+    }
+  }
+
   const importId = await prisma.$transaction(async (tx) => {
     const order = await tx.importOrder.create({
       data: {
