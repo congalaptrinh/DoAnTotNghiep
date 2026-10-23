@@ -20,10 +20,18 @@ class OrderService {
   OrderService._();
   static final instance = OrderService._();
 
-  Future<void> createImportAndConfirm({required String warehouseId, required List<QuickOrderItem> items}) async {
+  Future<void> createImportAndConfirm({
+    required String warehouseId,
+    String? supplierId,
+    required List<QuickOrderItem> items,
+  }) async {
     final created = await ApiClient.instance.post<Map<String, dynamic>>(
       '/import-orders',
-      data: {'warehouse_id': warehouseId, 'items': items.map((e) => e.toJson()).toList()},
+      data: {
+        'warehouse_id': warehouseId,
+        if (supplierId != null) 'supplier_id': supplierId,
+        'items': items.map((e) => e.toJson()).toList(),
+      },
     );
     await ApiClient.instance.post('/import-orders/${created['import_id']}/confirm');
   }

@@ -35,6 +35,14 @@ async function getById(id) {
 
 async function create(data, userId) {
   const { items, ...rest } = data;
+
+  if (rest.supplier_id) {
+    const supplier = await prisma.supplier.findUnique({ where: { supplier_id: rest.supplier_id } });
+    if (!supplier) {
+      throw new ApiError(404, 'Không tìm thấy nhà cung cấp');
+    }
+  }
+
   return prisma.importOrder.create({
     data: {
       ...rest,

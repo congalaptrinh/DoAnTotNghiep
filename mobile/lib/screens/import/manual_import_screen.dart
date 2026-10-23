@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../models/item.dart';
 import '../../models/storage_location.dart';
+import '../../models/supplier.dart';
 import '../../models/warehouse.dart';
 import '../../providers/dashboard_provider.dart';
 import '../../providers/history_provider.dart';
@@ -11,10 +12,18 @@ import '../../services/api_client.dart';
 import '../../services/item_service.dart';
 import '../../services/order_service.dart';
 import '../../services/storage_location_service.dart';
+import '../../services/supplier_service.dart';
 import '../../services/warehouse_service.dart';
 import '../../utils/app_theme.dart';
 
+int _nextManualRowId = 0;
+
+/// `id` là định danh ỔN ĐỊNH của dòng (không đổi suốt vòng đời dòng, khác
+/// `itemId`/`locationId` là GIÁ TRỊ đang chọn) — dùng làm key cho cả thẻ dòng
+/// lẫn từng dropdown bên trong, để thêm/xoá dòng giữa danh sách không làm
+/// Flutter tái sử dụng nhầm state hiển thị giữa các dòng (xem 07-DECISIONS-LOG.md).
 class _ManualRow {
+  final int id = _nextManualRowId++;
   String? itemId;
   String? locationId;
   final TextEditingController qtyController = TextEditingController();
@@ -42,7 +51,9 @@ class _ManualImportScreenState extends ConsumerState<ManualImportScreen> {
   List<Warehouse> _warehouses = [];
   List<Item> _items = [];
   List<StorageLocation> _locations = [];
+  List<Supplier> _suppliers = [];
   String? _warehouseId;
+  String? _supplierId;
   bool _loading = true;
   bool _loadingLocations = false;
   bool _submitting = false;
@@ -63,11 +74,18 @@ class _ManualImportScreenState extends ConsumerState<ManualImportScreen> {
   }
 
   Future<void> _loadInitialData() async {
-    final (warehouses, items) = await (WarehouseService.instance.listActive(), ItemService.instance.list()).wait;
+    // Danh sách NCC chỉ là TUỲ CHỌN — lỗi tải (mạng, thiếu quyền...) không được
+    // chặn cả màn hình, dropdown chỉ còn "Không chọn" (xem 07-DECISIONS-LOG.md).
+    final (warehouses, items, suppliers) = await (
+      WarehouseService.instance.listActive(),
+      ItemService.instance.list(),
+      SupplierService.instance.listActive().catchError((_) => <Supplier>[]),
+    ).wait;
     if (!mounted) return;
     setState(() {
       _warehouses = warehouses;
       _items = items;
+      _suppliers = suppliers;
       _loading = false;
     });
   }
@@ -118,7 +136,7 @@ class _ManualImportScreenState extends ConsumerState<ManualImportScreen> {
       _error = null;
     });
     try {
-      await OrderService.instance.createImportAndConfirm(warehouseId: _warehouseId!, items: items);
+      await OrderService.instance.createImportAndConfirm(warehouseId: _warehouseId!, supplierId: _supplierId, items: items);
       if (!mounted) return;
       // Nhiều vật tư trong 1 phiếu — invalidate riêng từng item (nếu đang có
       // ai đó mở sẵn Chi tiết vật tư của đúng item này) + các provider tổng.
@@ -161,12 +179,43 @@ class _ManualImportScreenState extends ConsumerState<ManualImportScreen> {
                     onChanged: _onWarehouseChanged,
                   ),
                 ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    AppSpacing.screenPadding,
+                    AppSpacing.itemGap,
+                    AppSpacing.screenPadding,
+                    0,
+                  ),
+                  // `key` đổi theo `_supplierId`: DropdownButtonFormField là FormField, chỉ
+                  // đọc `initialValue` ĐÚNG 1 LẦN lúc khởi tạo FormFieldState — đổi `key`
+                  // buộc Flutter dựng lại state mới mỗi lần giá trị đổi (xem ai_result_screen.dart).
+                  child: DropdownButtonFormField<String>(
+                    key: ValueKey(_supplierId),
+                    initialValue: _supplierId,
+                    isExpanded: true,
+                    decoration: const InputDecoration(labelText: 'Nhà cung cấp (tuỳ chọn)'),
+                    items: [
+                      const DropdownMenuItem(
+                        value: null,
+                        child: Text('Không chọn', maxLines: 1, overflow: TextOverflow.ellipsis),
+                      ),
+                      ..._suppliers.map(
+                        (s) => DropdownMenuItem(
+                          value: s.supplierId,
+                          child: Text(s.supplierName, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        ),
+                      ),
+                    ],
+                    onChanged: (v) => setState(() => _supplierId = v),
+                  ),
+                ),
                 Expanded(
                   child: ListView.separated(
                     padding: const EdgeInsets.all(AppSpacing.screenPadding),
                     itemCount: _rows.length,
                     separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.itemGap),
                     itemBuilder: (context, i) => _ManualRowCard(
+                      key: ValueKey(_rows[i].id),
                       index: i,
                       row: _rows[i],
                       items: _items,
@@ -225,6 +274,7 @@ class _ManualRowCard extends StatelessWidget {
   final VoidCallback onChanged;
 
   const _ManualRowCard({
+    super.key,
     required this.index,
     required this.row,
     required this.items,
@@ -260,6 +310,7 @@ class _ManualRowCard extends StatelessWidget {
               ],
             ),
             DropdownButtonFormField<String>(
+              key: ValueKey('${row.id}_item_${row.itemId}'),
               initialValue: row.itemId,
               isExpanded: true,
               decoration: const InputDecoration(labelText: 'Vật tư', isDense: true),
@@ -278,6 +329,7 @@ class _ManualRowCard extends StatelessWidget {
                 Expanded(
                   flex: 3,
                   child: DropdownButtonFormField<String>(
+                    key: ValueKey('${row.id}_loc_${row.locationId}'),
                     initialValue: row.locationId,
                     isExpanded: true,
                     decoration: InputDecoration(

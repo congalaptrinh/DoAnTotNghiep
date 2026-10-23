@@ -97,4 +97,41 @@ describe('Import Orders (E1)', () => {
       });
     expect(res.status).toBe(404);
   });
+
+  test('create (luồng thủ công) KHÔNG có supplier_id -> DRAFT, supplier_id null', async () => {
+    const res = await request(app)
+      .post('/api/import-orders')
+      .set('Authorization', `Bearer ${staff.token}`)
+      .send({ warehouse_id: fx.warehouse.warehouse_id, items: [{ item_id: fx.item.item_id, location_id: fx.location.location_id, quantity: 1 }] });
+    expect(res.status).toBe(201);
+    expect(res.body.data.status).toBe('DRAFT');
+    expect(res.body.data.supplier_id).toBeNull();
+  });
+
+  test('create (luồng thủ công) CÓ supplier_id hợp lệ -> lưu đúng supplier trên phiếu', async () => {
+    const supplier = await createSupplier(adminToken);
+    const res = await request(app)
+      .post('/api/import-orders')
+      .set('Authorization', `Bearer ${staff.token}`)
+      .send({
+        warehouse_id: fx.warehouse.warehouse_id,
+        supplier_id: supplier.supplier_id,
+        items: [{ item_id: fx.item.item_id, location_id: fx.location.location_id, quantity: 1 }],
+      });
+    expect(res.status).toBe(201);
+    expect(res.body.data.supplier_id).toBe(supplier.supplier_id);
+    expect(res.body.data.supplier.supplier_name).toBe(supplier.supplier_name);
+  });
+
+  test('create (luồng thủ công) supplier_id KHÔNG tồn tại -> 404 rõ ràng, không tạo phiếu', async () => {
+    const res = await request(app)
+      .post('/api/import-orders')
+      .set('Authorization', `Bearer ${staff.token}`)
+      .send({
+        warehouse_id: fx.warehouse.warehouse_id,
+        supplier_id: '00000000-0000-0000-0000-000000000000',
+        items: [{ item_id: fx.item.item_id, location_id: fx.location.location_id, quantity: 1 }],
+      });
+    expect(res.status).toBe(404);
+  });
 });
