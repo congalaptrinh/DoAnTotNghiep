@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import PageLayout, { Card, Badge, Btn, Input, Th, Td } from '../components/PageLayout';
+import PageLayout, { Card, Badge, Btn, Input, Select, Th, Td } from '../components/PageLayout';
 import { Modal, ConfirmDialog, useToast, EmptyState } from '../components/ui';
 import { usePermission } from '../hooks/usePermission';
 import { ApiError } from '../services/apiClient';
@@ -12,10 +12,11 @@ function errMsg(err: unknown, fallback: string): string {
   return err instanceof ApiError ? err.message : fallback;
 }
 
-const emptyForm = { supplier_name: '', contact_name: '', phone: '', email: '', address: '' };
+const emptyForm = { supplier_name: '', contact_name: '', phone: '', email: '', address: '', status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE' };
 
 export default function SuppliersPage() {
   const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [modal, setModal] = useState<SupplierModal | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
@@ -29,7 +30,8 @@ export default function SuppliersPage() {
   const suppliers = suppliersQuery.data ?? [];
 
   const filtered = suppliers.filter((s) =>
-    search === '' || s.supplier_name.toLowerCase().includes(search.toLowerCase()) || (s.contact_name ?? '').toLowerCase().includes(search.toLowerCase())
+    (search === '' || s.supplier_name.toLowerCase().includes(search.toLowerCase()) || (s.contact_name ?? '').toLowerCase().includes(search.toLowerCase()))
+    && (statusFilter === 'all' || s.status === statusFilter)
   );
   const detail = suppliers.find((s) => s.supplier_id === selectedId);
 
@@ -48,13 +50,18 @@ export default function SuppliersPage() {
     onSuccess: () => { qc.invalidateQueries({ queryKey: ['suppliers'] }); show('success', 'Đã ngừng hợp tác'); setDeleteTarget(null); },
     onError: (err) => { show('error', errMsg(err, 'Thao tác thất bại')); setDeleteTarget(null); },
   });
+  const reactivateMut = useMutation({
+    mutationFn: (id: string) => updateSupplier(id, { status: 'ACTIVE' }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['suppliers'] }); show('success', 'Đã kích hoạt lại nhà cung cấp'); },
+    onError: (err) => show('error', errMsg(err, 'Kích hoạt lại thất bại')),
+  });
 
   function openAdd() {
     setForm(emptyForm);
     setModal({ mode: 'add' });
   }
   function openEdit(s: Supplier) {
-    setForm({ supplier_name: s.supplier_name, contact_name: s.contact_name ?? '', phone: s.phone ?? '', email: s.email ?? '', address: s.address ?? '' });
+    setForm({ supplier_name: s.supplier_name, contact_name: s.contact_name ?? '', phone: s.phone ?? '', email: s.email ?? '', address: s.address ?? '', status: s.status });
     setModal({ mode: 'edit', supplier: s });
   }
   function saveModal() {
@@ -65,6 +72,7 @@ export default function SuppliersPage() {
       phone: form.phone || undefined,
       email: form.email || undefined,
       address: form.address || undefined,
+      status: form.status,
     };
     if (modal?.mode === 'add') createMut.mutate(data);
     else if (modal?.mode === 'edit') updateMut.mutate({ id: modal.supplier.supplier_id, data });
@@ -96,8 +104,18 @@ export default function SuppliersPage() {
           {/* List */}
           <div className="flex-1">
             <Card>
-              <div className="px-5 py-4 border-b border-gray-100">
-                <Input placeholder="Tìm nhà cung cấp hoặc người liên hệ..." value={search} onChange={setSearch} className="w-full" />
+              <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
+                <Input placeholder="Tìm nhà cung cấp hoặc người liên hệ..." value={search} onChange={setSearch} className="flex-1" />
+                <Select
+                  value={statusFilter}
+                  onChange={setStatusFilter}
+                  options={[
+                    { value: 'all', label: 'Tất cả trạng thái' },
+                    { value: 'ACTIVE', label: 'Đang hoạt động' },
+                    { value: 'INACTIVE', label: 'Ngừng hoạt động' },
+                  ]}
+                  className="w-48"
+                />
               </div>
               {filtered.length === 0 ? (
                 <EmptyState title="Chưa có nhà cung cấp nào" action={canWriteSuppliers ? { label: 'Thêm nhà cung cấp đầu tiên', onClick: openAdd } : undefined} />
@@ -143,10 +161,16 @@ export default function SuppliersPage() {
                                     <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                                   </svg>
                                 </button>
-                                {s.status === 'ACTIVE' && (
+                                {s.status === 'ACTIVE' ? (
                                   <button className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-danger transition-colors" onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: s.supplier_id, name: s.supplier_name }); }} title="Ngừng hợp tác">
                                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                                       <path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                    </svg>
+                                  </button>
+                                ) : (
+                                  <button className="p-1.5 hover:bg-green-50 rounded-lg text-gray-400 hover:text-success transition-colors" onClick={(e) => { e.stopPropagation(); reactivateMut.mutate(s.supplier_id); }} disabled={reactivateMut.isPending} title="Kích hoạt lại">
+                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                     </svg>
                                   </button>
                                 )}
@@ -239,6 +263,16 @@ export default function SuppliersPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Địa chỉ</label>
             <Input value={form.address} onChange={(v) => setForm({ ...form, address: v })} placeholder="Không bắt buộc" />
           </div>
+          {modal?.mode === 'edit' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Trạng thái</label>
+              <Select
+                value={form.status}
+                onChange={(v) => setForm({ ...form, status: v as 'ACTIVE' | 'INACTIVE' })}
+                options={[{ value: 'ACTIVE', label: 'Đang hoạt động' }, { value: 'INACTIVE', label: 'Ngừng hoạt động' }]}
+              />
+            </div>
+          )}
         </div>
       </Modal>
 

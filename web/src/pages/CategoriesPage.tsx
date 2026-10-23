@@ -23,8 +23,9 @@ export default function CategoriesPage() {
   const [categoryModal, setCategoryModal] = useState<CategoryModal | null>(null);
   const [itemModal, setItemModal] = useState<ItemModal | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
+  const [itemStatusFilter, setItemStatusFilter] = useState('all');
   const [categoryForm, setCategoryForm] = useState({ category_name: '', parent_id: '', description: '' });
-  const [itemForm, setItemForm] = useState({ item_code: '', item_name: '', category_id: '', unit: '', min_stock: '0', max_stock: '' });
+  const [itemForm, setItemForm] = useState({ item_code: '', item_name: '', category_id: '', unit: '', min_stock: '0', max_stock: '', status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE' });
 
   const { canWrite } = usePermission();
   /** Danh mục (item_categories) và Vật tư (items) hiện cùng 1 quyền ghi (admin+manager) — vẫn tra theo resource, không giả định "cả trang 1 quyền", để không lệch nếu Backend đổi RBAC sau này. */
@@ -38,6 +39,7 @@ export default function CategoriesPage() {
 
   const categories = categoriesQuery.data ?? [];
   const items = itemsQuery.data ?? [];
+  const filteredItems = items.filter((i) => itemStatusFilter === 'all' || i.status === itemStatusFilter);
   const rootCategories = categories.filter((c) => !c.parent_id);
   const childrenOf = (id: string) => categories.filter((c) => c.parent_id === id);
   const itemCountOf = (categoryId: string) => items.filter((i) => i.category_id === categoryId).length;
@@ -117,6 +119,12 @@ export default function CategoriesPage() {
     },
   });
 
+  const reactivateItemMut = useMutation({
+    mutationFn: (id: string) => updateItem(id, { status: 'ACTIVE' }),
+    onSuccess: () => { qc.invalidateQueries({ queryKey: ['items'] }); show('success', 'Đã kích hoạt lại vật tư'); },
+    onError: (err) => show('error', errMsg(err, 'Kích hoạt lại vật tư thất bại')),
+  });
+
   /* ───────────── Modal openers ───────────── */
 
   function openAddCategory(parentId?: string) {
@@ -139,13 +147,13 @@ export default function CategoriesPage() {
   }
 
   function openAddItem() {
-    setItemForm({ item_code: '', item_name: '', category_id: rootCategories[0]?.category_id ?? '', unit: '', min_stock: '0', max_stock: '' });
+    setItemForm({ item_code: '', item_name: '', category_id: rootCategories[0]?.category_id ?? '', unit: '', min_stock: '0', max_stock: '', status: 'ACTIVE' });
     setItemModal({ mode: 'add' });
   }
   function openEditItem(item: Item) {
     setItemForm({
       item_code: item.item_code, item_name: item.item_name, category_id: item.category_id, unit: item.unit,
-      min_stock: String(item.min_stock), max_stock: item.max_stock != null ? String(item.max_stock) : '',
+      min_stock: String(item.min_stock), max_stock: item.max_stock != null ? String(item.max_stock) : '', status: item.status,
     });
     setItemModal({ mode: 'edit', item });
   }
@@ -158,6 +166,7 @@ export default function CategoriesPage() {
       unit: itemForm.unit.trim(),
       min_stock: Number(itemForm.min_stock) || 0,
       max_stock: itemForm.max_stock ? Number(itemForm.max_stock) : undefined,
+      status: itemForm.status,
     };
     if (itemModal?.mode === 'add') createItemMut.mutate(data);
     else if (itemModal?.mode === 'edit') updateItemMut.mutate({ id: itemModal.item.item_id, data });
@@ -287,11 +296,24 @@ export default function CategoriesPage() {
         </Card>
       ) : (
         <Card>
-          <div className="px-5 py-4 border-b border-gray-100">
-            <p className="text-sm text-gray-500">Tổng: <b className="text-gray-900">{items.length} vật tư</b></p>
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-3">
+            <p className="text-sm text-gray-500">Tổng: <b className="text-gray-900">{filteredItems.length} vật tư</b></p>
+            <Select
+              value={itemStatusFilter}
+              onChange={setItemStatusFilter}
+              options={[
+                { value: 'all', label: 'Tất cả trạng thái' },
+                { value: 'ACTIVE', label: 'Đang dùng' },
+                { value: 'INACTIVE', label: 'Ngưng dùng' },
+              ]}
+              className="w-44 ml-auto"
+            />
           </div>
-          {items.length === 0 ? (
-            <EmptyState title="Chưa có vật tư nào" action={canWriteCurrentTab ? { label: 'Thêm vật tư đầu tiên', onClick: openAddItem } : undefined} />
+          {filteredItems.length === 0 ? (
+            <EmptyState
+              title={items.length === 0 ? 'Chưa có vật tư nào' : 'Không có vật tư nào khớp bộ lọc'}
+              action={items.length === 0 && canWriteCurrentTab ? { label: 'Thêm vật tư đầu tiên', onClick: openAddItem } : undefined}
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -308,7 +330,7 @@ export default function CategoriesPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {items.map((item) => (
+                  {filteredItems.map((item) => (
                     <tr key={item.item_id} className="hover:bg-gray-50/60 transition-colors">
                       <Td><span className="font-mono text-xs text-gray-500">{item.item_code}</span></Td>
                       <Td><span className="font-semibold text-gray-900">{item.item_name}</span></Td>
@@ -329,10 +351,16 @@ export default function CategoriesPage() {
                                 <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                               </svg>
                             </button>
-                            {item.status === 'ACTIVE' && (
+                            {item.status === 'ACTIVE' ? (
                               <button className="p-1.5 hover:bg-red-50 rounded-lg text-gray-400 hover:text-danger transition-colors" onClick={() => setDeleteTarget({ type: 'item', id: item.item_id, name: item.item_name })} title="Ngừng sử dụng">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
                                   <path d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                                </svg>
+                              </button>
+                            ) : (
+                              <button className="p-1.5 hover:bg-green-50 rounded-lg text-gray-400 hover:text-success transition-colors" onClick={() => reactivateItemMut.mutate(item.item_id)} disabled={reactivateItemMut.isPending} title="Kích hoạt lại">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                 </svg>
                               </button>
                             )}
@@ -434,6 +462,16 @@ export default function CategoriesPage() {
               <Input type="number" value={itemForm.max_stock} onChange={(v) => setItemForm({ ...itemForm, max_stock: v })} placeholder="Không bắt buộc" />
             </div>
           </div>
+          {itemModal?.mode === 'edit' && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Trạng thái</label>
+              <Select
+                value={itemForm.status}
+                onChange={(v) => setItemForm({ ...itemForm, status: v as 'ACTIVE' | 'INACTIVE' })}
+                options={[{ value: 'ACTIVE', label: 'Đang dùng' }, { value: 'INACTIVE', label: 'Ngưng dùng' }]}
+              />
+            </div>
+          )}
         </div>
       </Modal>
 

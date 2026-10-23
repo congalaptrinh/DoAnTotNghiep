@@ -2,10 +2,13 @@
     <!-- Giai đoạn E: chụp ảnh thật cho luồng nhận diện AI -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <!-- Gọi API Backend qua HTTP -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <application
         android:label="wms_mobile"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true">
         <activity
             android:name=".MainActivity"
             android:exported="true"
